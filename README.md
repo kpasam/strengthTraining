@@ -29,13 +29,19 @@ Notes:
 - If `DATABASE_PATH` is not set, the app uses `data/gym.db` locally.
 - The app will create the `data/` directory automatically if it does not exist.
 
-3. Start the development server:
+3. Set up the database schema (required on first run):
+
+```bash
+npm run db:push
+```
+
+4. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-4. Open the app:
+5. Open the app:
 
 [http://localhost:3000](http://localhost:3000)
 

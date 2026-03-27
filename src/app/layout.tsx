@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Gym Tracker",
   description: "Strength training workout tracker",
   manifest: "/manifest.json",
+  icons: { icon: "/favicon.ico" },
 };
 
 export const viewport: Viewport = {
@@ -40,7 +42,9 @@ export default function RootLayout({
         `}} />
       </head>
       <body className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-        <main className="max-w-lg mx-auto px-4 py-4 pb-24 animate-fadeIn">{children}</main>
+        <main className="max-w-lg mx-auto px-4 py-4 pb-24 animate-fadeIn">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
         <BottomNav />
       </body>
     </html>

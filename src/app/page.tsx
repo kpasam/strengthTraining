@@ -57,6 +57,7 @@ export default function HomePage() {
   const [username, setUsername] = useState<string>("");
   const [date, setDate] = useState(() => new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" }));
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [introText, setIntroText] = useState("");
   const [summaryText, setSummaryText] = useState("");
   const [isManualComplete, setIsManualComplete] = useState(false);
@@ -70,8 +71,17 @@ export default function HomePage() {
 
   const fetchPlan = useCallback(async () => {
     setLoading(true);
+    setFetchError(false);
     try {
-      const res = await fetch(`/api/workout/today?date=${date}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      let res: Response;
+      try {
+        res = await fetch(`/api/workout/today?date=${date}`, { signal: controller.signal });
+      } finally {
+        clearTimeout(timeout);
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setPlan(data.plan);
       setUsername(data.username);
@@ -118,6 +128,7 @@ export default function HomePage() {
     } catch {
       setPlan(null);
       setUsername("");
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -205,16 +216,26 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+      ) : fetchError ? (
+        <div className="text-center py-20">
+          <div className="text-4xl mb-4">⚠️</div>
+          <p className="text-[var(--text-secondary)] mb-3 font-medium">Could not load workout data</p>
+          <button
+            onClick={fetchPlan}
+            className="text-sm px-4 py-2 bg-[var(--accent-blue)] text-white rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
       ) : !plan ? (
         <div className="text-center py-20">
-          <svg className="mx-auto mb-4 w-16 h-16 text-[var(--text-secondary)] opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M6.5 6.5a4 4 0 0 1 8 0v1a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-1Z" />
-            <path d="M9.5 13.5a4 4 0 0 1 8 0v1a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-1Z" />
-            <path d="M10.5 7.5v6" />
-          </svg>
-          <p className="text-[var(--text-secondary)] mb-2 font-medium">No workout plan for this date</p>
+          <div className="text-5xl mb-4">🛋️</div>
+          <p className="text-lg font-bold text-[var(--text-primary)] mb-1">Rest Day</p>
           <p className="text-sm text-[var(--text-secondary)] opacity-70">
-            Hit Sync to pull the latest plan from Google Slides
+            No entry in the source for this date. Enjoy the recovery!
+          </p>
+          <p className="text-xs text-[var(--text-secondary)] opacity-50 mt-3">
+            If this seems wrong, hit Sync to re-pull from Google Slides.
           </p>
         </div>
       ) : (

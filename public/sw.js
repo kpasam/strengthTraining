@@ -1,5 +1,9 @@
-const CACHE_NAME = 'gym-tracker-v1';
-const STATIC_ASSETS = ['/', '/login', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE_NAME = 'gym-tracker-v3';
+// Only pre-cache truly static, auth-independent assets.
+// HTML routes (/ and /login) are auth-gated — caching them during install
+// (which runs without credentials) would bake in a redirect to /login for
+// all users, or serve stale HTML after deploys.
+const STATIC_ASSETS = ['/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -31,7 +35,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for static assets
+  // Never cache Next.js built chunks — they share filenames across rebuilds in dev
+  // and Next.js sets its own cache headers in production
+  if (request.url.includes('/_next/')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Cache-first for other static assets (icons, manifest, fonts)
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
