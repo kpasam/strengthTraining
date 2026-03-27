@@ -15,6 +15,13 @@
       "when": 1774503835838,
       "tag": "0001_round_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1774622760787,
+      "tag": "0002_white_ultragirl",
+      "breakpoints": true
     }
   ]
 }

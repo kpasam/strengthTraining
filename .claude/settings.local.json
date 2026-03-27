@@ -24,7 +24,30 @@
       "Bash(kill 30640)",
       "Bash(grep -E \"\\\\.\\(env|yml|yaml\\)$\")",
       "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
-      "Bash(find /Users/kpasam/Code/strengthTraining -type f \\\\\\(-name *.test.ts -o -name *.test.tsx -o -name *.spec.ts -o -name *.spec.tsx -o -name __tests__ \\\\\\))"
+      "Bash(find /Users/kpasam/Code/strengthTraining -type f \\\\\\(-name *.test.ts -o -name *.test.tsx -o -name *.spec.ts -o -name *.spec.tsx -o -name __tests__ \\\\\\))",
+      "Bash(sqlite3 data/gym.db \".tables\")",
+      "Bash(sqlite3 /Users/kpasam/Code/strengthTraining/data/gym.db \"SELECT COUNT\\(*\\) as user_count FROM users; SELECT COUNT\\(*\\) as plan_count FROM workout_plans; SELECT COUNT\\(*\\) as exercise_count FROM exercises;\")",
+      "Bash(sqlite3 /Users/kpasam/Code/strengthTraining/data/gym.db \"SELECT id, date FROM workout_plans ORDER BY date DESC LIMIT 5;\")",
+      "Bash(sqlite3 /Users/kpasam/Code/strengthTraining/data/gym.db \"SELECT id, username FROM users;\")",
+      "Bash(sqlite3 /Users/kpasam/Code/strengthTraining/data/gym.db \"SELECT id, date FROM workout_plans ORDER BY date DESC LIMIT 10;\")",
+      "Bash(sqlite3 /Users/kpasam/Code/strengthTraining/data/gym.db \"SELECT wg.id, wg.group_label, wg.prescribed_sets, wge.exercise_id, e.canonical_name, wge.prescribed_reps FROM workout_groups wg JOIN workout_group_exercises wge ON wg.id = wge.group_id JOIN exercises e ON wge.exercise_id = e.id WHERE wg.plan_id = 7 LIMIT 5;\")",
+      "Bash(kill 73585)",
+      "Bash(sqlite3 data/gym.db \"SELECT date, id FROM workout_plans ORDER BY date DESC LIMIT 5;\")",
+      "Bash(python3 -c \"from PIL import Image; img = Image.open\\(''public/icon-192.png''\\); print\\(img.size\\)\")",
+      "Bash(python3 -c \"import struct, zlib; d=open\\(''public/icon-192.png'',''rb''\\).read\\(\\); w,h=struct.unpack\\(''>II'',d[16:24]\\); print\\(w,h\\)\")",
+      "Bash(python3 -:*)",
+      "Bash(python3 -c \"import struct; d=open\\(''public/icon-192.png'',''rb''\\).read\\(\\); w,h=struct.unpack\\(''>II'',d[16:24]\\); print\\(''192 icon:'', w, h\\)\")",
+      "Bash(python3 -c \"import struct; d=open\\(''public/icon-512.png'',''rb''\\).read\\(\\); w,h=struct.unpack\\(''>II'',d[16:24]\\); print\\(''512 icon:'', w, h\\)\")",
+      "Bash(kill 76511)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(fly deploy:*)",
+      "Bash(find /Users/kpasam/Code/strengthTraining -name *.cache -o -name turbopack -type d)",
+      "Bash(fly ssh:*)",
+      "Bash(wait)",
+      "Bash(sqlite3 data/gym.db \".schema exercise_labels\")",
+      "Bash(sqlite3 data/gym.db \"SELECT id, canonical_name FROM exercises ORDER BY canonical_name;\")"
     ]
   }
 }

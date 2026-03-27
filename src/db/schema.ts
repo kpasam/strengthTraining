@@ -66,6 +66,19 @@ export const workoutCompletions = sqliteTable(
   ]
 );
 
+export const exerciseLabels = sqliteTable("exercise_labels", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  exerciseId: integer("exercise_id")
+    .notNull()
+    .unique()
+    .references(() => exercises.id, { onDelete: "cascade" }),
+  isExercise: integer("is_exercise", { mode: "boolean" }).notNull().default(true),
+  bodyPart: text("body_part"),
+  intensity: text("intensity"),
+  movementType: text("movement_type"),
+  equipment: text("equipment"),
+});
+
 export const workoutLogs = sqliteTable(
   "workout_logs",
   {

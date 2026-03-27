@@ -99,10 +99,12 @@ export default function HomePage() {
       setUsername(data.username);
 
       // Check server-side manual completion
+      let manualComplete = false;
       try {
         const completeRes = await fetch(`/api/workout/complete?date=${date}`);
         const completeData = await completeRes.json();
-        setIsManualComplete(completeData.complete || false);
+        manualComplete = completeData.complete || false;
+        setIsManualComplete(manualComplete);
       } catch {
         setIsManualComplete(false);
       }
@@ -110,8 +112,8 @@ export default function HomePage() {
       if (data.plan) {
         setIntroText("");
         setSummaryText("");
-        
-        let allComplete = isManualComplete;
+
+        let allComplete = manualComplete;
         
         if (!allComplete) {
           allComplete = true;
