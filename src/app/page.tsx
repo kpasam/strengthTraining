@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
-import { SyncButton } from "@/components/SyncButton";
+import { SettingsModal } from "@/components/SettingsModal";
 import { VariantBadges } from "@/components/VariantBadge";
 import Link from "next/link";
 
@@ -42,6 +42,11 @@ function subscribeTheme(cb: () => void) {
 const LIGHT_VARS: Record<string, string> = {"--bg-primary":"#f5f5f5","--bg-secondary":"#e8e8e8","--bg-card":"#ffffff","--text-primary":"#1a1a1a","--text-secondary":"#6b7280","--accent-green":"#16a34a","--accent-blue":"#2563eb","--accent-red":"#dc2626","--accent-yellow":"#ca8a04"};
 const DARK_VARS: Record<string, string> = {"--bg-primary":"#0a0a0a","--bg-secondary":"#1a1a1a","--bg-card":"#222222","--text-primary":"#f0f0f0","--text-secondary":"#a0a0a0","--accent-green":"#22c55e","--accent-blue":"#3b82f6","--accent-red":"#ef4444","--accent-yellow":"#eab308"};
 
+function shiftDate(date: string, days: number): string {
+  const d = new Date(date + "T12:00:00");
+  d.setDate(d.getDate() + days);
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+}
 
 export default function HomePage() {
   const theme = useSyncExternalStore(subscribeTheme, getTheme, () => "dark");
@@ -61,6 +66,13 @@ export default function HomePage() {
   const [introText, setIntroText] = useState("");
   const [summaryText, setSummaryText] = useState("");
   const [isManualComplete, setIsManualComplete] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const handleThemeToggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    localStorage.setItem("theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+  };
 
   const getGroupProgress = useCallback((group: Group) => {
     const mainExercises = group.exercises.filter((e) => !e.isAccessory);
@@ -162,44 +174,42 @@ export default function HomePage() {
             <p className="text-sm text-[var(--text-secondary)]">{formatDate(date)}</p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-3 mt-1">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 mt-1">
+          <button
+            onClick={() => setDate(shiftDate(date, -1))}
+            className="text-base font-medium text-[var(--text-secondary)] bg-[var(--bg-card)] w-8 h-8 flex items-center justify-center rounded-lg active:opacity-70"
+            aria-label="Previous day"
+          >
+            ‹
+          </button>
+          <label className="relative cursor-pointer">
+            <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-card)] px-2 py-1.5 rounded-lg select-none block">
+              {new Date(date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="bg-[var(--bg-card)] text-xs px-2 py-1.5 rounded outline-none"
+              className="absolute inset-0 opacity-0 w-full cursor-pointer"
             />
-            <SyncButton onSynced={fetchPlan} />
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const next = theme === "dark" ? "light" : "dark";
-                localStorage.setItem("theme", next);
-                document.documentElement.setAttribute("data-theme", next);
-              }}
-              className="text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-card)] px-3 py-1.5 rounded-lg active:opacity-70"
-            >
-              {theme === "light" ? "\u{1F319}" : "\u{2600}\u{FE0F}"}
-            </button>
-            <a
-              href="/api/export?format=csv"
-              className="text-xs font-medium text-[var(--text-secondary)] bg-[var(--bg-card)] px-3 py-1.5 rounded-lg active:opacity-70"
-            >
-              Export CSV
-            </a>
-            <button
-              onClick={async () => {
-                if (!confirm("Are you sure you want to log out?")) return;
-                await fetch('/api/auth/login', { method: 'DELETE' });
-                window.location.href = '/login';
-              }}
-              className="text-xs font-medium text-[var(--accent-red)] bg-[var(--accent-red)]/10 px-3 py-1.5 rounded-lg active:opacity-70"
-            >
-              Logout
-            </button>
-          </div>
+          </label>
+          <button
+            onClick={() => setDate(shiftDate(date, 1))}
+            className="text-base font-medium text-[var(--text-secondary)] bg-[var(--bg-card)] w-8 h-8 flex items-center justify-center rounded-lg active:opacity-70"
+            aria-label="Next day"
+          >
+            ›
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="text-[var(--text-secondary)] bg-[var(--bg-card)] w-8 h-8 flex items-center justify-center rounded-lg active:opacity-70 ml-1"
+            aria-label="Settings"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -235,7 +245,7 @@ export default function HomePage() {
             No entry in the source for this date. Enjoy the recovery!
           </p>
           <p className="text-xs text-[var(--text-secondary)] opacity-50 mt-3">
-            If this seems wrong, hit Sync to re-pull from Google Slides.
+            If this seems wrong, open Settings to sync from Google Slides.
           </p>
         </div>
       ) : (
@@ -278,9 +288,9 @@ export default function HomePage() {
                           fetchPlan();
                         }
                       }}
-                      className="mt-4 block w-full py-3 text-center border-2 border-[var(--accent-red)]/30 text-[var(--accent-red)] font-bold text-sm rounded-xl active:bg-[var(--accent-red)]/10 transition-colors"
+                      className="mt-3 text-xs text-[var(--accent-red)]/50 active:text-[var(--accent-red)] transition-colors w-full text-center py-2"
                     >
-                      COMPLETE WORKOUT (FINISH EARLY)
+                      mark complete early
                     </button>
                   </>
                 ) : (
@@ -362,6 +372,14 @@ export default function HomePage() {
           })}
         </div>
       )}
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        theme={theme}
+        onThemeToggle={handleThemeToggle}
+        onSynced={fetchPlan}
+      />
     </div>
   );
 }

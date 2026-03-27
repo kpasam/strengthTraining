@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gym-tracker-v3';
+const CACHE_NAME = 'gym-tracker-v4';
 // Only pre-cache truly static, auth-independent assets.
 // HTML routes (/ and /login) are auth-gated — caching them during install
 // (which runs without credentials) would bake in a redirect to /login for
@@ -29,6 +29,14 @@ self.addEventListener('fetch', (event) => {
 
   // Network-first for API calls
   if (request.url.includes('/api/')) {
+    event.respondWith(
+      fetch(request).catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Network-first for HTML page navigations — they're auth-gated and change with deployments
+  if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
       fetch(request).catch(() => caches.match(request))
     );
