@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --use-npm)",
+      "Read(//Users/kpasam/Code/**)",
+      "Bash(npx create-next-app@latest strength-training --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --use-npm)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(npx next:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node /Users/kpasam/Code/strengthTraining/run_migrate.js)",
+      "Bash(node -e \":*)",
+      "Bash(npm run:*)",
+      "Bash(sqlite3 data/gym.db \"SELECT date FROM workout_plans ORDER BY date DESC LIMIT 5;\")",
+      "Bash(sqlite3 data/gym.db \"SELECT DISTINCT wl.exerciseId, e.canonical_name, wl.reps, wl.weight, wl.date FROM workout_logs wl JOIN exercises e ON e.id = wl.exercise_id ORDER BY wl.date DESC LIMIT 15;\")",
+      "Bash(sqlite3 data/gym.db \".schema workout_logs\")",
+      "Bash(sqlite3 data/gym.db \"SELECT wl.exercise_id, e.canonical_name, wl.reps, wl.weight, wl.date FROM workout_logs wl JOIN exercises e ON e.id = wl.exercise_id ORDER BY wl.date DESC LIMIT 15;\")",
+      "Bash(sqlite3 data/gym.db \"SELECT DISTINCT date FROM workout_logs ORDER BY date;\")",
+      "Bash(sqlite3 data/gym.db \"SELECT id, username FROM users LIMIT 3;\")",
+      "Bash(sqlite3 data/gym.db \"SELECT pin FROM users WHERE username=''kpasam'';\")",
+      "Bash(npx tsc:*)",
+      "Bash(sqlite3 data/gym.db \"SELECT user_id, exercise_id, reps, weight, date FROM workout_logs WHERE reps IS NOT NULL AND weight IS NOT NULL LIMIT 5;\")",
+      "Bash(kill 30640)",
+      "Bash(grep -E \"\\\\.\\(env|yml|yaml\\)$\")",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
+      "Bash(find /Users/kpasam/Code/strengthTraining -type f \\\\\\(-name *.test.ts -o -name *.test.tsx -o -name *.spec.ts -o -name *.spec.tsx -o -name __tests__ \\\\\\))"
+    ]
+  }
+}
