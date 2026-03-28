@@ -74,21 +74,22 @@ export async function POST(req: NextRequest) {
             .run();
           planId = existingPlan.id;
 
-          // Delete existing group exercises first (child rows), then groups
+          // Delete non-manual groups (preserve M-prefixed manual groups)
           const oldGroups = tx
-            .select({ id: schema.workoutGroups.id })
+            .select({ id: schema.workoutGroups.id, groupLabel: schema.workoutGroups.groupLabel })
             .from(schema.workoutGroups)
             .where(eq(schema.workoutGroups.planId, planId))
             .all();
 
           for (const og of oldGroups) {
+            if (/^M\d+$/.test(og.groupLabel)) continue; // preserve manual groups
             tx.delete(schema.workoutGroupExercises)
               .where(eq(schema.workoutGroupExercises.groupId, og.id))
               .run();
+            tx.delete(schema.workoutGroups)
+              .where(eq(schema.workoutGroups.id, og.id))
+              .run();
           }
-          tx.delete(schema.workoutGroups)
-            .where(eq(schema.workoutGroups.planId, planId))
-            .run();
         } else {
           const plan = tx
             .insert(schema.workoutPlans)
@@ -117,7 +118,7 @@ export async function POST(req: NextRequest) {
         }
         const mergedGroups = Array.from(mergedGroupsMap.values());
 
-        // Insert groups + exercises
+        // Insert groups + exercises (Steve's groups come first, sort order starts at 0)
         for (let gi = 0; gi < mergedGroups.length; gi++) {
           const group = mergedGroups[gi];
           const groupRow = tx

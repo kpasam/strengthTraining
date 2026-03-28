@@ -47,7 +47,21 @@
       "Bash(fly ssh:*)",
       "Bash(wait)",
       "Bash(sqlite3 data/gym.db \".schema exercise_labels\")",
-      "Bash(sqlite3 data/gym.db \"SELECT id, canonical_name FROM exercises ORDER BY canonical_name;\")"
+      "Bash(sqlite3 data/gym.db \"SELECT id, canonical_name FROM exercises ORDER BY canonical_name;\")",
+      "Bash(npx tsx:*)",
+      "Bash(sqlite3 data/gym.db \"SELECT e.canonical_name, el.body_part, el.intensity, el.movement_type FROM exercises e JOIN exercise_labels el ON e.id = el.exercise_id WHERE el.is_exercise = 1 ORDER BY e.canonical_name LIMIT 20;\")",
+      "Bash(sqlite3 data/gym.db \"SELECT COUNT\\(*\\) as garbage FROM exercise_labels WHERE is_exercise = 0;\")",
+      "Bash(sqlite3 data/gym.db \"SELECT canonical_name FROM exercises e JOIN exercise_labels el ON e.id = el.exercise_id WHERE el.is_exercise = 0 LIMIT 5;\")",
+      "Bash(curl -s \"http://localhost:3000/api/exercises/catalog\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Total: {len\\(d[\"\"exercises\"\"]\\)}''''\\); [print\\(f''''  {e[\"\"canonicalName\"\"]} | {e[\"\"bodyPart\"\"]} | {e[\"\"intensity\"\"]}''''\\) for e in d[''''exercises''''][:8]]\")",
+      "Bash(curl -sv \"http://localhost:3000/api/exercises/catalog\")",
+      "Bash(sqlite3 data/gym.db \"SELECT username FROM users LIMIT 3;\")",
+      "Bash(npm test:*)",
+      "Bash(kill 26048)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/api/workout/add-exercise?date=2026-03-28)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -X PATCH -H \"Content-Type: application/json\" -d '{}' http://localhost:3000/api/workout/plan-exercise)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:3000/api/workout/add-exercise?date=2026-03-28\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -X PATCH -H \"Content-Type: application/json\" -d '{}' \"http://localhost:3000/api/workout/plan-exercise\")"
     ]
   }
 }

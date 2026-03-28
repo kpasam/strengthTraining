@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { VariantBadges } from "@/components/VariantBadge";
@@ -25,7 +25,7 @@ interface ExerciseInfo {
   canonicalName: string;
 }
 
-export default function ExerciseHistoryPage() {
+function ExerciseHistoryContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const exerciseId = params.exerciseId as string;
@@ -245,5 +245,13 @@ export default function ExerciseHistoryPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ExerciseHistoryPage() {
+  return (
+    <Suspense>
+      <ExerciseHistoryContent />
+    </Suspense>
   );
 }

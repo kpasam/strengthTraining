@@ -84,6 +84,15 @@ function getDb(): BetterSQLite3Database<typeof schema> {
     );
     CREATE INDEX IF NOT EXISTS idx_logs_exercise_date ON workout_logs(exercise_id, date);
     CREATE INDEX IF NOT EXISTS idx_logs_user_exercise_reps ON workout_logs(user_id, exercise_id, reps);
+    CREATE TABLE IF NOT EXISTS exercise_labels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      exercise_id INTEGER NOT NULL UNIQUE REFERENCES exercises(id) ON DELETE CASCADE,
+      is_exercise INTEGER NOT NULL DEFAULT 1,
+      body_part TEXT,
+      intensity TEXT,
+      movement_type TEXT,
+      equipment TEXT
+    );
   `);
 
   _db = drizzle(sqlite, { schema });

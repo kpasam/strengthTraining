@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { WeightInput } from "@/components/WeightInput";
 import { RepInput } from "@/components/RepInput";
 import { VariantBadges } from "@/components/VariantBadge";
 import { UndoToast } from "@/components/UndoToast";
-import { RestTimer } from "@/components/RestTimer";
 
 interface LogEntry {
   id: number;
@@ -68,7 +67,7 @@ function getTargetReps(prescribedReps: string | null, completedSets: number): nu
   return parts[parts.length - 1];
 }
 
-export default function WorkoutGroupPage() {
+function WorkoutGroupContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const groupLabel = params.groupLabel as string;
@@ -87,15 +86,8 @@ export default function WorkoutGroupPage() {
   const [hasInitRoundRobin, setHasInitRoundRobin] = useState(false);
   const [undoLog, setUndoLog] = useState<{ id: number; message: string } | null>(null);
   const [prCelebration, setPrCelebration] = useState<string | null>(null);
-  const [restTimerRunning, setRestTimerRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [restDuration, setRestDuration] = useState(() => {
-    if (typeof window !== "undefined") {
-      return parseInt(localStorage.getItem("restDuration") || "90", 10);
-    }
-    return 90;
-  });
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -218,7 +210,6 @@ export default function WorkoutGroupPage() {
         setErrorMsg(null);
         if (!editingLogId) {
           setUndoLog({ id: data.log.id, message: `Set ${setNumber} logged` });
-          setRestTimerRunning(true);
         }
         setEditingLogId(null);
         setRpe(null);
@@ -360,12 +351,6 @@ export default function WorkoutGroupPage() {
 
   return (
     <div>
-      <RestTimer
-        running={restTimerRunning}
-        onDismiss={() => setRestTimerRunning(false)}
-        initialSeconds={restDuration}
-      />
-
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <Link
@@ -378,24 +363,7 @@ export default function WorkoutGroupPage() {
           <h2 className="text-lg font-bold">Group {groupLabel}</h2>
           <span className="text-xs font-mono text-[var(--text-secondary)] tabular-nums">{formatElapsed(elapsed)}</span>
         </div>
-        <div className="flex items-center gap-1">
-          {[30, 60, 90, 120, 180].map((s) => (
-            <button
-              key={s}
-              onClick={() => {
-                setRestDuration(s);
-                localStorage.setItem("restDuration", String(s));
-              }}
-              className={`px-1.5 py-0.5 text-xs rounded font-medium transition-colors ${
-                restDuration === s
-                  ? "bg-[var(--accent-blue)] text-white"
-                  : "bg-[var(--bg-card)] text-[var(--text-secondary)]"
-              }`}
-            >
-              {s < 60 ? `${s}s` : `${s / 60}m`}
-            </button>
-          ))}
-        </div>
+        <div />
       </div>
 
       {/* Error message */}
@@ -645,12 +613,17 @@ export default function WorkoutGroupPage() {
         </div>
       )}
 
-      {/* PR celebration banner */}
+      {/* PR celebration toast */}
       {prCelebration && (
-        <div className="fixed top-1/3 left-4 right-4 max-w-lg mx-auto bg-[var(--accent-yellow)]/20 border-2 border-[var(--accent-yellow)] rounded-2xl p-6 text-center shadow-2xl z-50 animate-fadeIn">
-          <span className="text-4xl block mb-2">🏆</span>
-          <p className="text-xl font-bold text-[var(--accent-yellow)]">{prCelebration}</p>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">You just beat your personal record!</p>
+        <div
+          onClick={() => setPrCelebration(null)}
+          className="fixed bottom-20 left-4 right-4 max-w-lg mx-auto bg-[var(--bg-card)] border border-[var(--accent-yellow)] rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg z-50 animate-fadeIn"
+        >
+          <span className="text-2xl">🏆</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-[var(--accent-yellow)]">{prCelebration}</p>
+            <p className="text-xs text-[var(--text-secondary)]">New personal record!</p>
+          </div>
         </div>
       )}
 
@@ -663,5 +636,13 @@ export default function WorkoutGroupPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function WorkoutGroupPage() {
+  return (
+    <Suspense>
+      <WorkoutGroupContent />
+    </Suspense>
   );
 }

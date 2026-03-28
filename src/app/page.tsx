@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { SettingsModal } from "@/components/SettingsModal";
+import { MoveExerciseModal } from "@/components/MoveExerciseModal";
 import { VariantBadges } from "@/components/VariantBadge";
 import Link from "next/link";
 
 interface Exercise {
+  id: number;
   exerciseId: number;
   canonicalName: string;
   variantFlags: string[];
@@ -60,13 +62,76 @@ export default function HomePage() {
 
   const [plan, setPlan] = useState<Plan | null>(null);
   const [username, setUsername] = useState<string>("");
-  const [date, setDate] = useState(() => new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" }));
+  const [date, setDate] = useState(() => {
+    if (typeof window !== "undefined") {
+      const d = new URLSearchParams(window.location.search).get("date");
+      if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    }
+    return new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+  });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [introText, setIntroText] = useState("");
   const [summaryText, setSummaryText] = useState("");
   const [isManualComplete, setIsManualComplete] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
+  const [removingId, setRemovingId] = useState<number | null>(null);
+
+  interface MoveTarget { exerciseGroupId: number; exerciseName: string; currentGroupLabel: string }
+  const [moveTarget, setMoveTarget] = useState<MoveTarget | null>(null);
+  const [moving, setMoving] = useState(false);
+
+  const handleAskSteve = async () => {
+    setSyncing(true);
+    setSyncMsg("");
+    try {
+      const res = await fetch("/api/sync", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setSyncMsg(data.synced > 0 ? "Synced!" : "Already up to date");
+        await fetchPlan();
+      } else {
+        setSyncMsg("Sync failed");
+      }
+    } catch {
+      setSyncMsg("Sync failed");
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncMsg(""), 3000);
+    }
+  };
+
+  const deleteExercise = async (workoutGroupExerciseId: number) => {
+    setRemovingId(workoutGroupExerciseId);
+    try {
+      await fetch("/api/workout/plan-exercise", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workoutGroupExerciseId }),
+      });
+      await fetchPlan();
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  const handleMove = async (targetGroupLabel: string) => {
+    if (!moveTarget) return;
+    setMoving(true);
+    try {
+      await fetch("/api/workout/plan-exercise", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workoutGroupExerciseId: moveTarget.exerciseGroupId, targetGroupLabel }),
+      });
+      setMoveTarget(null);
+      await fetchPlan();
+    } finally {
+      setMoving(false);
+    }
+  };
 
   const handleThemeToggle = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -239,16 +304,62 @@ export default function HomePage() {
             Retry
           </button>
         </div>
-      ) : !plan ? (
-        <div className="text-center py-20">
-          <div className="text-5xl mb-4">🛋️</div>
-          <p className="text-lg font-bold text-[var(--text-primary)] mb-1">Rest Day</p>
-          <p className="text-sm text-[var(--text-secondary)] opacity-70">
-            No entry in the source for this date. Enjoy the recovery!
+      ) : !plan || plan.groups.length === 0 ? (
+        <div className="py-8">
+          <p className="text-sm text-[var(--text-secondary)] text-center mb-6">
+            No plan for this day. What would you like to do?
           </p>
-          <p className="text-xs text-[var(--text-secondary)] opacity-50 mt-3">
-            If this seems wrong, open Settings to sync from Google Slides.
-          </p>
+          <div className="space-y-3">
+            <Link
+              href={`/add-exercise?date=${date}`}
+              className="flex items-center gap-4 p-5 bg-[var(--bg-card)] border border-white/5 rounded-2xl active:opacity-70 transition-opacity"
+            >
+              <div className="w-11 h-11 rounded-xl bg-[var(--accent-blue)]/15 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-[var(--accent-blue)]">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-[var(--text-primary)]">Add an Exercise</p>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Pick from the exercise catalog</p>
+              </div>
+            </Link>
+
+            <Link
+              href={`/exercises/new?date=${date}`}
+              className="flex items-center gap-4 p-5 bg-[var(--bg-card)] border border-white/5 rounded-2xl active:opacity-70 transition-opacity"
+            >
+              <div className="w-11 h-11 rounded-xl bg-[var(--accent-yellow)]/15 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-[var(--accent-yellow)]">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-[var(--text-primary)]">Create Exercise</p>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Define a new exercise for your catalog</p>
+              </div>
+            </Link>
+
+            <button
+              onClick={handleAskSteve}
+              disabled={syncing}
+              className="w-full flex items-center gap-4 p-5 bg-[var(--bg-card)] border border-white/5 rounded-2xl active:opacity-70 transition-opacity disabled:opacity-50"
+            >
+              <div className="w-11 h-11 rounded-xl bg-[var(--accent-green)]/15 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 text-[var(--accent-green)]">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-[var(--text-primary)]">
+                  {syncing ? "Syncing…" : "Ask Steve"}
+                </p>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                  {syncMsg || "Sync today's plan from slides"}
+                </p>
+              </div>
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -340,22 +451,55 @@ export default function HomePage() {
                 {group.exercises.map((ex, i) => (
                   <div
                     key={i}
-                    className={`text-sm ${
+                    className={`flex items-center gap-1 text-sm ${
                       ex.isAccessory
                         ? "text-[var(--text-secondary)] ml-4 italic"
                         : "text-[var(--text-primary)]"
                     } ${i > 0 ? "mt-1" : ""}`}
                   >
-                    {ex.isAccessory && "* "}
-                    <span className="capitalize">{ex.canonicalName}</span>
-                    <VariantBadges flags={ex.variantFlags} />
-                    {ex.prescribedReps && (
-                      <span className="text-[var(--text-secondary)]">
-                        {" "}
-                        — {ex.prescribedReps}
-                        {ex.prescribedNotes && ` (${ex.prescribedNotes})`}
-                      </span>
-                    )}
+                    <span className="flex-1 min-w-0">
+                      {ex.isAccessory && "* "}
+                      <span className="capitalize">{ex.canonicalName}</span>
+                      <VariantBadges flags={ex.variantFlags} />
+                      {ex.prescribedReps && (
+                        <span className="text-[var(--text-secondary)]">
+                          {" "}
+                          — {ex.prescribedReps}
+                          {ex.prescribedNotes && ` (${ex.prescribedNotes})`}
+                        </span>
+                      )}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMoveTarget({ exerciseGroupId: ex.id, exerciseName: ex.canonicalName, currentGroupLabel: group.groupLabel });
+                      }}
+                      className="shrink-0 w-6 h-6 flex items-center justify-center rounded text-[var(--text-secondary)]/40 active:text-[var(--accent-blue)] transition-colors"
+                      aria-label={`Move ${ex.canonicalName}`}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M4 17h12m0 0l-4-4m4 4l-4 4" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        deleteExercise(ex.id);
+                      }}
+                      disabled={removingId === ex.id}
+                      className="shrink-0 w-6 h-6 flex items-center justify-center rounded text-[var(--text-secondary)]/40 active:text-[var(--accent-red)] transition-colors disabled:opacity-30"
+                      aria-label={`Remove ${ex.canonicalName}`}
+                    >
+                      {removingId === ex.id ? (
+                        <span className="text-xs">…</span>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-3.5 h-3.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 ))}
                 {/* Progress bar */}
@@ -372,6 +516,29 @@ export default function HomePage() {
               </Link>
             );
           })}
+
+          {/* Add / Create exercise links */}
+          <div className="flex items-center justify-center gap-4 py-2">
+            <Link
+              href={`/add-exercise?date=${date}`}
+              className="flex items-center gap-1.5 py-2 text-sm text-[var(--text-secondary)] active:text-[var(--accent-blue)] transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Exercise
+            </Link>
+            <span className="text-[var(--text-secondary)]/30 text-xs">|</span>
+            <Link
+              href={`/exercises/new?date=${date}`}
+              className="flex items-center gap-1.5 py-2 text-sm text-[var(--text-secondary)] active:text-[var(--accent-yellow)] transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Create Exercise
+            </Link>
+          </div>
         </div>
       )}
 
@@ -381,6 +548,15 @@ export default function HomePage() {
         theme={theme}
         onThemeToggle={handleThemeToggle}
         onSynced={fetchPlan}
+      />
+      <MoveExerciseModal
+        open={moveTarget !== null}
+        exerciseName={moveTarget?.exerciseName ?? ""}
+        currentGroupLabel={moveTarget?.currentGroupLabel ?? ""}
+        groups={plan?.groups.map((g) => ({ id: g.id, groupLabel: g.groupLabel, exerciseNames: g.exercises.map((e) => e.canonicalName) })) ?? []}
+        onMove={handleMove}
+        onClose={() => setMoveTarget(null)}
+        moving={moving}
       />
     </div>
   );

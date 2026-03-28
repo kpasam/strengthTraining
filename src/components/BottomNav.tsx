@@ -74,8 +74,8 @@ export function BottomNav() {
     },
   ];
 
-  // Hide on login and workout/history pages
-  if (pathname.startsWith("/login") || pathname.startsWith("/workout") || pathname.startsWith("/history")) {
+  // Hide on login, workout, history, add-exercise, and new exercise pages
+  if (pathname.startsWith("/login") || pathname.startsWith("/workout") || pathname.startsWith("/history") || pathname.startsWith("/add-exercise") || pathname === "/exercises/new") {
     return null;
   }
 
