@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.strengthtraining.mobile.app-mergeDebugResources-34:/values-hdpi-v4/values-hdpi-v4.xml",
+            "map": [
+                {
+                    "source": "/Users/kpasam/.gradle/caches/9.0.0/transforms/43f66cb8e28ff95c4e4a65959ca84146/transformed/appcompat-1.7.0/res/values-hdpi-v4/values-hdpi-v4.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "6",
+                        "endColumns": "13",
+                        "endOffsets": "327"
+                    }
+                }
+            ]
+        }
+    ]
+}

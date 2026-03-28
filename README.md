@@ -92,6 +92,14 @@ Start the production server:
 npm run start
 ```
 
+## Android App Wrapper
+
+An Android wrapper project now lives in `android-app/`.
+
+- It packages the deployed site `https://gym-tracker-kpasam.fly.dev` inside a native Android `WebView`.
+- This is the practical mobile path for this codebase because the app depends on Next.js API routes and SQLite on the server.
+- Build notes and sideload instructions are in `android-app/README.md`.
+
 ## Deploy to Server
 
 This repo is set up to deploy to Fly.io using:
