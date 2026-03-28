@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
+import { seedExerciseLabels } from "./exerciseLabelsSeed";
 import path from "path";
 import fs from "fs";
 
@@ -94,6 +95,12 @@ function getDb(): BetterSQLite3Database<typeof schema> {
       equipment TEXT
     );
   `);
+
+  // Auto-seed if exercises table has fewer entries than the known catalog (e.g. fresh/partial production DB)
+  const { c } = sqlite.prepare("SELECT COUNT(*) as c FROM exercises").get() as { c: number };
+  if (c < 126) {
+    seedExerciseLabels(sqlite);
+  }
 
   _db = drizzle(sqlite, { schema });
   return _db;

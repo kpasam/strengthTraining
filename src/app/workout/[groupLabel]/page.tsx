@@ -495,24 +495,24 @@ function WorkoutGroupContent() {
           {/* RPE selector */}
           <div className="mb-3">
             <label className="text-xs text-[var(--text-secondary)] mb-1 block">
-              RPE <span className="text-[var(--text-secondary)] opacity-60">(optional)</span>
+              Effort <span className="text-[var(--text-secondary)] opacity-60">(optional)</span>
             </label>
-            <div className="flex gap-1">
-              {[6, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((val) => (
+            <div className="flex gap-2">
+              {([
+                { label: "Easy", value: 7, activeClass: "bg-[var(--accent-green)] text-black" },
+                { label: "Normal", value: 8, activeClass: "bg-[var(--accent-yellow)] text-black" },
+                { label: "Hard", value: 9.5, activeClass: "bg-[var(--accent-red)] text-white" },
+              ] as const).map(({ label, value, activeClass }) => (
                 <button
-                  key={val}
-                  onClick={() => setRpe(rpe === val ? null : val)}
+                  key={value}
+                  onClick={() => setRpe(rpe === value ? null : value)}
                   className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${
-                    rpe === val
-                      ? val >= 9.5
-                        ? "bg-[var(--accent-red)] text-white"
-                        : val >= 8
-                          ? "bg-[var(--accent-yellow)] text-black"
-                          : "bg-[var(--accent-green)] text-black"
+                    rpe === value
+                      ? activeClass
                       : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
                   }`}
                 >
-                  {val}
+                  {label}
                 </button>
               ))}
             </div>

@@ -11,8 +11,15 @@ interface SetEntry {
   weight: number | null;
   weightUnit: string;
   reps: number | null;
+  rpe: number | null;
   notes: string;
   variantFlags: string[];
+}
+
+function rpeLabel(rpe: number): { label: string; color: string } {
+  if (rpe >= 9) return { label: "Hard", color: "var(--accent-red)" };
+  if (rpe >= 8) return { label: "Normal", color: "var(--accent-yellow)" };
+  return { label: "Easy", color: "var(--accent-green)" };
 }
 
 interface Session {
@@ -224,6 +231,14 @@ function ExerciseHistoryContent() {
                           : `${set.reps} reps`}
                       </span>
                       <VariantBadges flags={set.variantFlags} />
+                      {set.rpe !== null && (() => {
+                        const { label, color } = rpeLabel(set.rpe);
+                        return (
+                          <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ color, border: `1px solid ${color}` }}>
+                            {label}
+                          </span>
+                        );
+                      })()}
                       {set.notes && (
                         <span className="text-xs text-[var(--text-secondary)]">
                           ({set.notes})
