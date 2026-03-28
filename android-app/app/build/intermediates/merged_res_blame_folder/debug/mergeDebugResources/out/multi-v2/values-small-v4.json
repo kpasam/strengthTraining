@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.strengthtraining.mobile.app-mergeDebugResources-34:/values-small-v4/values-small-v4.xml",
+            "map": [
+                {
+                    "source": "/Users/kpasam/.gradle/caches/9.0.0/transforms/560f2439e04a269becb94872a9580adb/transformed/material-1.12.0/res/values-small-v4/values-small-v4.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,128,198,270",
+                        "endColumns": "72,69,71,69",
+                        "endOffsets": "123,193,265,335"
+                    }
+                }
+            ]
+        }
+    ]
+}

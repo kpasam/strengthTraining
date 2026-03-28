@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gym Tracker</string>
+    <string name="download_description">Downloading workout export</string>
+    <string name="download_started">Download started</string>
+    <string name="error_title">Connection needed</string>
+    <string name="error_message">This Android app wraps your live Gym Tracker server. Check your connection and try again.</string>
+    <string name="no_app_available">No app available to open that link.</string>
+    <string name="retry">Retry</string>
+</resources>

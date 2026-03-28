@@ -1,0 +1,4 @@
+com.strengthtraining.mobile.test.app-androidTest-0 /Users/kpasam/Code/strengthTraining/android-app/app/build/generated/res/resValues/androidTest/debug
+com.strengthtraining.mobile.test.app-mergeDebugAndroidTestResources-1 /Users/kpasam/Code/strengthTraining/android-app/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.strengthtraining.mobile.test.app-mergeDebugAndroidTestResources-2 /Users/kpasam/Code/strengthTraining/android-app/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.strengthtraining.mobile.test.app-debugAndroidTest-3 /Users/kpasam/Code/strengthTraining/android-app/app/build/intermediates/merged_res/debugAndroidTest/mergeDebugAndroidTestResources
