@@ -41,6 +41,7 @@ function ExerciseHistoryContent() {
   const [exercise, setExercise] = useState<ExerciseInfo | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -58,12 +59,12 @@ function ExerciseHistoryContent() {
   }, [fetchHistory]);
 
   const handleDeleteSet = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this set?")) return;
     await fetch("/api/log", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
+    setConfirmDeleteId(null);
     fetchHistory();
   };
 
@@ -245,13 +246,20 @@ function ExerciseHistoryContent() {
                         </span>
                       )}
                     </div>
-                    <button 
-                      onClick={() => handleDeleteSet(set.id)} 
-                      className="text-[var(--text-secondary)] active:text-[var(--accent-red)] p-1 ml-2"
-                      aria-label="Delete set"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    </button>
+                    {confirmDeleteId === set.id ? (
+                      <div className="flex items-center gap-1.5 ml-2">
+                        <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-0.5 rounded bg-[var(--bg-secondary)] text-xs active:opacity-70">No</button>
+                        <button onClick={() => handleDeleteSet(set.id)} className="px-2 py-0.5 rounded bg-[var(--accent-red)] text-white text-xs font-bold active:opacity-70">Yes</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(set.id)}
+                        className="text-[var(--text-secondary)] active:text-[var(--accent-red)] p-1 ml-2"
+                        aria-label="Delete set"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

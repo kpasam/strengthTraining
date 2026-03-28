@@ -121,7 +121,7 @@ function AddExerciseContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
         <Link
@@ -147,7 +147,7 @@ function AddExerciseContent() {
       />
 
       {/* Body part filter chips */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none scroll-fade-x">
         {BODY_PARTS.map((bp) => (
           <button
             key={bp}
@@ -253,7 +253,7 @@ function AddExerciseContent() {
             onClick={() => setSelected(null)}
           />
           {/* Sheet */}
-          <div className="relative bg-[var(--bg-card)] rounded-t-3xl p-6 pb-10">
+          <div className="relative bg-[var(--bg-card)] rounded-t-3xl p-6 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]">
             {/* Handle */}
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-5" />
 
@@ -276,7 +276,7 @@ function AddExerciseContent() {
             {groups.length > 0 && (
               <div className="mb-5">
                 <p className="text-xs text-[var(--text-secondary)] mb-2 uppercase tracking-wide">Add to group</p>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none scroll-fade-x">
                   <button
                     onClick={() => setSelectedGroupLabel(null)}
                     className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors active:opacity-70 ${

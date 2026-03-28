@@ -14,7 +14,7 @@ export function WeightInput({ value, unit, onChange, onUnitChange }: WeightInput
     <div className="flex items-center gap-1">
       <button
         onClick={() => { navigator.vibrate?.(10); onChange(Math.max(0, (value || 0) - increment)); }}
-        className="w-10 h-10 flex items-center justify-center rounded-lg bg-[var(--bg-secondary)] text-lg font-bold active:bg-[var(--accent-red)]/30 transition-colors"
+        className="w-12 h-12 flex items-center justify-center rounded-lg bg-[var(--bg-secondary)] text-lg font-bold active:bg-[var(--accent-red)]/30 transition-colors"
       >
         −
       </button>
@@ -28,20 +28,20 @@ export function WeightInput({ value, unit, onChange, onUnitChange }: WeightInput
           onChange(v === "" ? null : parseFloat(v));
         }}
         placeholder="0"
-        className="w-20 h-10 text-center text-lg font-bold bg-[var(--bg-secondary)] rounded-lg border-none outline-none
+        className="w-20 h-12 text-center text-lg font-bold bg-[var(--bg-secondary)] rounded-lg border-none outline-none
                    focus:ring-2 focus:ring-[var(--accent-blue)]"
       />
 
       <button
         onClick={() => { navigator.vibrate?.(10); onChange((value || 0) + increment); }}
-        className="w-10 h-10 flex items-center justify-center rounded-lg bg-[var(--bg-secondary)] text-lg font-bold active:bg-[var(--accent-green)]/30 transition-colors"
+        className="w-12 h-12 flex items-center justify-center rounded-lg bg-[var(--bg-secondary)] text-lg font-bold active:bg-[var(--accent-green)]/30 transition-colors"
       >
         +
       </button>
 
       <button
         onClick={() => onUnitChange(unit === "lbs" ? "kg" : "lbs")}
-        className="ml-1 px-2 h-10 rounded-lg text-sm font-bold bg-[var(--bg-secondary)] active:bg-[var(--accent-blue)]/30 transition-colors"
+        className="ml-1 px-2 h-12 rounded-lg text-sm font-bold bg-[var(--bg-secondary)] active:bg-[var(--accent-blue)]/30 transition-colors"
       >
         {unit}
       </button>

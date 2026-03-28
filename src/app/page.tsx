@@ -82,6 +82,7 @@ export default function HomePage() {
   interface MoveTarget { exerciseGroupId: number; exerciseName: string; currentGroupLabel: string }
   const [moveTarget, setMoveTarget] = useState<MoveTarget | null>(null);
   const [moving, setMoving] = useState(false);
+  const [confirmEarlyEnd, setConfirmEarlyEnd] = useState(false);
 
   const handleAskSteve = async () => {
     setSyncing(true);
@@ -389,22 +390,39 @@ export default function HomePage() {
                         </p>
                       </div>
                     )}
-                    <button
-                      onClick={async () => {
-                        if (confirm("End your workout early?")) {
-                          await fetch('/api/workout/complete', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ date }),
-                          });
-                          setIsManualComplete(true);
-                          fetchPlan();
-                        }
-                      }}
-                      className="mt-3 text-xs text-[var(--accent-red)]/50 active:text-[var(--accent-red)] transition-colors w-full text-center py-2"
-                    >
-                      mark complete early
-                    </button>
+                    {confirmEarlyEnd ? (
+                      <div className="mt-3 flex items-center justify-center gap-3">
+                        <span className="text-xs text-[var(--text-secondary)]">End early?</span>
+                        <button
+                          onClick={() => setConfirmEarlyEnd(false)}
+                          className="px-3 py-1 rounded-lg bg-[var(--bg-card)] text-xs font-medium active:opacity-70"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={async () => {
+                            setConfirmEarlyEnd(false);
+                            await fetch('/api/workout/complete', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ date }),
+                            });
+                            setIsManualComplete(true);
+                            fetchPlan();
+                          }}
+                          className="px-3 py-1 rounded-lg bg-[var(--accent-red)] text-white text-xs font-bold active:opacity-70"
+                        >
+                          End
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmEarlyEnd(true)}
+                        className="mt-3 text-xs text-[var(--accent-red)]/50 active:text-[var(--accent-red)] transition-colors w-full text-center py-2"
+                      >
+                        mark complete early
+                      </button>
+                    )}
                   </>
                 ) : (
                   <div className="bg-[var(--accent-green)]/10 p-5 rounded-2xl border border-[var(--accent-green)]/30 shadow-lg text-center">

@@ -51,9 +51,10 @@ export default function LoginPage() {
             <input
               type="text"
               required
+              autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 bg-[var(--bg-secondary)] rounded-xl outline-none focus:ring-2 focus:ring-[var(--accent-blue)]"
+              className="w-full px-4 py-3 text-base bg-[var(--bg-secondary)] rounded-xl outline-none focus:ring-2 focus:ring-[var(--accent-blue)]"
               placeholder="e.g. kpasam"
             />
           </div>
@@ -64,9 +65,10 @@ export default function LoginPage() {
               inputMode="numeric"
               pattern="[0-9]*"
               required
+              autoComplete="current-password"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
-              className="w-full px-4 py-3 bg-[var(--bg-secondary)] rounded-xl outline-none focus:ring-2 focus:ring-[var(--accent-blue)]"
+              className="w-full px-4 py-3 text-base bg-[var(--bg-secondary)] rounded-xl outline-none focus:ring-2 focus:ring-[var(--accent-blue)]"
               placeholder="4-digit PIN"
             />
           </div>

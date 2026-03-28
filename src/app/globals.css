@@ -10,14 +10,23 @@
   --accent-blue: #3b82f6;
   --accent-red: #ef4444;
   --accent-yellow: #eab308;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body {
+  min-height: 100dvh;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: system-ui, -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+}
+
+/* Horizontal scroll fade edges — signals content is scrollable */
+.scroll-fade-x {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
 }
 
 input[type="number"]::-webkit-inner-spin-button,

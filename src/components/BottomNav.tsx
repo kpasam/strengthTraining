@@ -80,7 +80,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t border-white/10 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t border-white/10 z-50 pb-[env(safe-area-inset-bottom,0px)]">
       <div className="max-w-lg mx-auto flex">
         {tabs.map((tab) => {
           const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
@@ -88,7 +88,7 @@ export function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-colors active:opacity-60 ${
+              className={`flex-1 flex flex-col items-center justify-center min-h-[48px] gap-0.5 transition-colors active:opacity-60 ${
                 active ? "text-[var(--accent-blue)]" : "text-[var(--text-secondary)]"
               }`}
             >
@@ -98,8 +98,6 @@ export function BottomNav() {
           );
         })}
       </div>
-      {/* Safe area spacer for iOS home indicator */}
-      <div className="h-safe-area-inset-bottom" style={{ height: "env(safe-area-inset-bottom)" }} />
     </nav>
   );
 }

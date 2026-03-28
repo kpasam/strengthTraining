@@ -34,7 +34,7 @@ export function MoveExerciseModal({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       {/* Sheet */}
-      <div className="relative bg-[var(--bg-card)] rounded-t-3xl p-6 pb-10">
+      <div className="relative bg-[var(--bg-card)] rounded-t-3xl p-6 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]">
         {/* Handle */}
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-5" />
 

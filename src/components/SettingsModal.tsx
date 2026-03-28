@@ -13,6 +13,7 @@ interface SettingsModalProps {
 export function SettingsModal({ open, onClose, theme, onThemeToggle, onSynced }: SettingsModalProps) {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   if (!open) return null;
 
@@ -33,7 +34,6 @@ export function SettingsModal({ open, onClose, theme, onThemeToggle, onSynced }:
   }
 
   async function handleLogout() {
-    if (!confirm("Are you sure you want to log out?")) return;
     await fetch("/api/auth/login", { method: "DELETE" });
     window.location.href = "/login";
   }
@@ -48,7 +48,7 @@ export function SettingsModal({ open, onClose, theme, onThemeToggle, onSynced }:
           <h2 className="text-base font-bold">Settings</h2>
         </div>
         {/* Scrollable body */}
-        <div className="max-w-lg mx-auto w-full px-6 pb-6 overflow-y-auto" style={{ maxHeight: "calc(80vh - 72px)" }}>
+        <div className="max-w-lg mx-auto w-full px-6 pb-6 overflow-y-auto" style={{ maxHeight: "calc(80dvh - 72px)" }}>
 
           <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mt-4 mb-2">Appearance</p>
           <div className="bg-[var(--bg-secondary)] rounded-xl mb-5 overflow-hidden">
@@ -82,12 +82,22 @@ export function SettingsModal({ open, onClose, theme, onThemeToggle, onSynced }:
 
           <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Account</p>
           <div className="bg-[var(--accent-red)]/10 rounded-xl overflow-hidden">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center px-4 py-3 active:opacity-70"
-            >
-              <span className="text-sm font-medium text-[var(--accent-red)]">Log Out</span>
-            </button>
+            {confirmLogout ? (
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-sm text-[var(--accent-red)]">Log out?</span>
+                <div className="flex gap-2">
+                  <button onClick={() => setConfirmLogout(false)} className="px-3 py-1 rounded-lg bg-[var(--bg-secondary)] text-xs font-medium active:opacity-70">Cancel</button>
+                  <button onClick={handleLogout} className="px-3 py-1 rounded-lg bg-[var(--accent-red)] text-white text-xs font-bold active:opacity-70">Log Out</button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmLogout(true)}
+                className="w-full flex items-center px-4 py-3 active:opacity-70"
+              >
+                <span className="text-sm font-medium text-[var(--accent-red)]">Log Out</span>
+              </button>
+            )}
           </div>
 
           <div style={{ height: "env(safe-area-inset-bottom)" }} />

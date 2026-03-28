@@ -114,7 +114,7 @@ function NewExerciseContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link

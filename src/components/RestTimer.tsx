@@ -45,7 +45,7 @@ export function RestTimer({ running, onDismiss, initialSeconds = 90 }: RestTimer
   return (
     <div
       onClick={onDismiss}
-      className={`fixed top-0 left-0 right-0 z-40 cursor-pointer transition-all ${
+      className={`fixed top-0 left-0 right-0 z-40 cursor-pointer transition-all pt-[env(safe-area-inset-top,0px)] ${
         isComplete
           ? "bg-[var(--accent-green)]/20 border-b-2 border-[var(--accent-green)]"
           : "bg-[var(--bg-card)] border-b border-white/10"

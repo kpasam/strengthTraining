@@ -14,6 +14,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#0a0a0a",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -41,8 +42,8 @@ export default function RootLayout({
           }
         `}} />
       </head>
-      <body className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-        <main className="max-w-lg mx-auto px-4 py-4 pb-24 animate-fadeIn">
+      <body className="min-h-[100dvh] bg-[var(--bg-primary)] text-[var(--text-primary)]">
+        <main className="max-w-lg mx-auto px-4 py-4 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] animate-fadeIn">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
         <BottomNav />
