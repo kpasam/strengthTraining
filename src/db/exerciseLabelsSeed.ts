@@ -5,6 +5,7 @@ interface Label {
   intensity: string;
   movementType: string;
   equipment: string;
+  exerciseType?: "strength" | "timed";
 }
 
 export const EXERCISE_LABELS: Record<string, Label> = {
@@ -84,7 +85,7 @@ export const EXERCISE_LABELS: Record<string, Label> = {
   "reverse drag":                      { bodyPart: "legs",      intensity: "moderate", movementType: "compound",  equipment: "sled" },
   "romanian deadlift":                 { bodyPart: "legs",      intensity: "high",     movementType: "compound",  equipment: "barbell" },
   "rope pull":                         { bodyPart: "back",      intensity: "moderate", movementType: "compound",  equipment: "cable" },
-  "run":                               { bodyPart: "full_body", intensity: "moderate", movementType: "compound",  equipment: "bodyweight" },
+  "run":                               { bodyPart: "full_body", intensity: "moderate", movementType: "compound",  equipment: "bodyweight", exerciseType: "timed" },
   "seated barbell shoulder press":     { bodyPart: "shoulders", intensity: "high",     movementType: "compound",  equipment: "barbell" },
   "seated vertical jumps":             { bodyPart: "legs",      intensity: "moderate", movementType: "compound",  equipment: "bodyweight" },
   "shoulder press":                    { bodyPart: "shoulders", intensity: "high",     movementType: "compound",  equipment: "barbell" },
@@ -114,8 +115,9 @@ export const EXERCISE_LABELS: Record<string, Label> = {
   "weighted duck walk":                { bodyPart: "legs",      intensity: "high",     movementType: "compound",  equipment: "dumbbell" },
   "wood chop":                         { bodyPart: "core",      intensity: "moderate", movementType: "compound",  equipment: "cable" },
   "z press":                           { bodyPart: "shoulders", intensity: "moderate", movementType: "compound",  equipment: "barbell" },
-  "200m run":                          { bodyPart: "full_body", intensity: "moderate", movementType: "compound",  equipment: "bodyweight" },
-  "400m run":                          { bodyPart: "full_body", intensity: "high",     movementType: "compound",  equipment: "bodyweight" },
+  "5k run":                            { bodyPart: "full_body", intensity: "high",     movementType: "compound",  equipment: "bodyweight", exerciseType: "timed" },
+  "200m run":                          { bodyPart: "full_body", intensity: "moderate", movementType: "compound",  equipment: "bodyweight", exerciseType: "timed" },
+  "400m run":                          { bodyPart: "full_body", intensity: "high",     movementType: "compound",  equipment: "bodyweight", exerciseType: "timed" },
   "1min march":                        { bodyPart: "core",      intensity: "low",      movementType: "compound",  equipment: "bodyweight" },
   "1min of high-low plank":            { bodyPart: "core",      intensity: "moderate", movementType: "isolation", equipment: "bodyweight" },
 };
@@ -167,14 +169,15 @@ export function seedExerciseLabels(sqlite: InstanceType<typeof Database>): void 
   `);
 
   const upsertLabel = sqlite.prepare(`
-    INSERT INTO exercise_labels (exercise_id, is_exercise, body_part, intensity, movement_type, equipment)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO exercise_labels (exercise_id, is_exercise, body_part, intensity, movement_type, equipment, exercise_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(exercise_id) DO UPDATE SET
       is_exercise = excluded.is_exercise,
       body_part = excluded.body_part,
       intensity = excluded.intensity,
       movement_type = excluded.movement_type,
-      equipment = excluded.equipment
+      equipment = excluded.equipment,
+      exercise_type = excluded.exercise_type
   `);
 
   const tx = sqlite.transaction(() => {
@@ -191,11 +194,11 @@ export function seedExerciseLabels(sqlite: InstanceType<typeof Database>): void 
     for (const ex of exercises) {
       const label = EXERCISE_LABELS[ex.canonical_name];
       if (label) {
-        upsertLabel.run(ex.id, 1, label.bodyPart, label.intensity, label.movementType, label.equipment);
+        upsertLabel.run(ex.id, 1, label.bodyPart, label.intensity, label.movementType, label.equipment, label.exerciseType || "strength");
       } else if (isGarbage(ex.canonical_name)) {
-        upsertLabel.run(ex.id, 0, null, null, null, null);
+        upsertLabel.run(ex.id, 0, null, null, null, null, "strength");
       } else {
-        upsertLabel.run(ex.id, 1, null, null, null, null);
+        upsertLabel.run(ex.id, 1, null, null, null, null, "strength");
       }
     }
   });

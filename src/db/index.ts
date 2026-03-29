@@ -96,10 +96,29 @@ function getDb(): BetterSQLite3Database<typeof schema> {
     );
   `);
 
+  // Add exercise_type column if missing (idempotent migration)
+  try {
+    sqlite.exec(`ALTER TABLE exercise_labels ADD COLUMN exercise_type TEXT DEFAULT 'strength'`);
+  } catch {
+    // Column already exists
+  }
+
   // Auto-seed if exercises table has fewer entries than the known catalog (e.g. fresh/partial production DB)
   const { c } = sqlite.prepare("SELECT COUNT(*) as c FROM exercises").get() as { c: number };
-  if (c < 126) {
+  if (c < 127) {
     seedExerciseLabels(sqlite);
+  }
+
+  // Ensure "5k run" exercise exists and is marked timed
+  const timedExercises = ["5k run", "run", "200m run", "400m run"];
+  for (const name of timedExercises) {
+    sqlite.exec(`INSERT OR IGNORE INTO exercises (canonical_name) VALUES ('${name}')`);
+    sqlite.exec(`
+      INSERT INTO exercise_labels (exercise_id, is_exercise, body_part, intensity, movement_type, equipment, exercise_type)
+      SELECT id, 1, 'full_body', 'high', 'compound', 'bodyweight', 'timed'
+      FROM exercises WHERE canonical_name = '${name}'
+      ON CONFLICT(exercise_id) DO UPDATE SET exercise_type = 'timed'
+    `);
   }
 
   _db = drizzle(sqlite, { schema });

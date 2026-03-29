@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { VariantBadges } from "@/components/VariantBadge";
+import { parseDurationToSeconds } from "@/components/DurationInput";
 
 interface SetEntry {
   id: number;
@@ -11,6 +12,7 @@ interface SetEntry {
   weight: number | null;
   weightUnit: string;
   reps: number | null;
+  duration: string | null;
   rpe: number | null;
   notes: string;
   variantFlags: string[];
@@ -30,6 +32,7 @@ interface Session {
 interface ExerciseInfo {
   id: number;
   canonicalName: string;
+  exerciseType: string;
 }
 
 function ExerciseHistoryContent() {
@@ -102,34 +105,65 @@ function ExerciseHistoryContent() {
     );
   }
 
-  // Find personal record (heaviest weight with at least 1 rep)
+  const isTimed = exercise.exerciseType === "timed";
+
+  // Find personal record
   let pr: { weight: number; weightUnit: string; reps: number; date: string } | null = null;
-  for (const session of sessions) {
-    for (const set of session.sets) {
-      if (set.weight && set.reps && set.reps > 0) {
-        if (!pr || set.weight > pr.weight) {
-          pr = {
-            weight: set.weight,
-            weightUnit: set.weightUnit,
-            reps: set.reps,
-            date: session.date,
-          };
+  let timePr: { duration: string; seconds: number; date: string } | null = null;
+
+  if (isTimed) {
+    for (const session of sessions) {
+      for (const set of session.sets) {
+        if (set.duration) {
+          const secs = parseDurationToSeconds(set.duration);
+          if (secs > 0 && (!timePr || secs < timePr.seconds)) {
+            timePr = { duration: set.duration, seconds: secs, date: session.date };
+          }
+        }
+      }
+    }
+  } else {
+    for (const session of sessions) {
+      for (const set of session.sets) {
+        if (set.weight && set.reps && set.reps > 0) {
+          if (!pr || set.weight > pr.weight) {
+            pr = {
+              weight: set.weight,
+              weightUnit: set.weightUnit,
+              reps: set.reps,
+              date: session.date,
+            };
+          }
         }
       }
     }
   }
 
-  // Build chart data: best weight per session
-  const chartData = sessions
-    .map((s) => {
-      let best = 0;
-      for (const set of s.sets) {
-        if (set.weight && set.weight > best) best = set.weight;
-      }
-      return { date: s.date, weight: best };
-    })
-    .filter((d) => d.weight > 0)
-    .reverse(); // chronological order
+  // Build chart data
+  const chartData = isTimed
+    ? sessions
+        .map((s) => {
+          let best = Infinity;
+          for (const set of s.sets) {
+            if (set.duration) {
+              const secs = parseDurationToSeconds(set.duration);
+              if (secs > 0 && secs < best) best = secs;
+            }
+          }
+          return { date: s.date, weight: best === Infinity ? 0 : best };
+        })
+        .filter((d) => d.weight > 0)
+        .reverse()
+    : sessions
+        .map((s) => {
+          let best = 0;
+          for (const set of s.sets) {
+            if (set.weight && set.weight > best) best = set.weight;
+          }
+          return { date: s.date, weight: best };
+        })
+        .filter((d) => d.weight > 0)
+        .reverse();
 
   return (
     <div>
@@ -142,16 +176,28 @@ function ExerciseHistoryContent() {
       </div>
 
       {/* Personal Record */}
-      {pr && (
-        <div className="bg-[var(--accent-yellow)]/10 border border-[var(--accent-yellow)]/30 rounded-xl p-3 mb-4">
-          <p className="text-xs text-[var(--accent-yellow)] uppercase tracking-wide mb-1">
-            Personal Record
-          </p>
-          <p className="text-lg font-bold">
-            {pr.weight}{pr.weightUnit} × {pr.reps}
-          </p>
-          <p className="text-xs text-[var(--text-secondary)]">{pr.date}</p>
-        </div>
+      {isTimed ? (
+        timePr && (
+          <div className="bg-[var(--accent-yellow)]/10 border border-[var(--accent-yellow)]/30 rounded-xl p-3 mb-4">
+            <p className="text-xs text-[var(--accent-yellow)] uppercase tracking-wide mb-1">
+              Fastest Time
+            </p>
+            <p className="text-lg font-bold">{timePr.duration}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{timePr.date}</p>
+          </div>
+        )
+      ) : (
+        pr && (
+          <div className="bg-[var(--accent-yellow)]/10 border border-[var(--accent-yellow)]/30 rounded-xl p-3 mb-4">
+            <p className="text-xs text-[var(--accent-yellow)] uppercase tracking-wide mb-1">
+              Personal Record
+            </p>
+            <p className="text-lg font-bold">
+              {pr.weight}{pr.weightUnit} × {pr.reps}
+            </p>
+            <p className="text-xs text-[var(--text-secondary)]">{pr.date}</p>
+          </div>
+        )
       )}
 
       {/* Progress chart */}
@@ -165,21 +211,27 @@ function ExerciseHistoryContent() {
         const chartH = 120;
         const points = chartData.map((d, i) => {
           const x = padding + (i / (chartData.length - 1)) * (chartW - padding * 2);
-          const y = chartH - padding - ((d.weight - minW) / range) * (chartH - padding * 2);
+          // For timed exercises, invert: lower time = higher on chart
+          const normalized = (d.weight - minW) / range;
+          const y = isTimed
+            ? padding + normalized * (chartH - padding * 2)
+            : chartH - padding - normalized * (chartH - padding * 2);
           return `${x},${y}`;
         });
         return (
           <div className="bg-[var(--bg-card)] border border-white/5 rounded-xl p-3 mb-4">
-            <p className="text-xs text-[var(--text-secondary)] mb-2">Weight Progression</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-2">{isTimed ? "Time Progression" : "Weight Progression"}</p>
             <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto">
               {/* Grid lines */}
               {[0, 0.25, 0.5, 0.75, 1].map((pct) => {
-                const y = chartH - padding - pct * (chartH - padding * 2);
+                const y = isTimed
+                  ? padding + (1 - pct) * (chartH - padding * 2)
+                  : chartH - padding - pct * (chartH - padding * 2);
                 const val = Math.round(minW + pct * range);
                 return (
                   <g key={pct}>
                     <line x1={padding} y1={y} x2={chartW - padding} y2={y} stroke="var(--bg-secondary)" strokeWidth="1" />
-                    <text x={padding - 4} y={y + 3} textAnchor="end" fill="var(--text-secondary)" fontSize="8">{val}</text>
+                    <text x={padding - 4} y={y + 3} textAnchor="end" fill="var(--text-secondary)" fontSize="8">{isTimed ? `${Math.floor(val / 60)}:${String(val % 60).padStart(2, "0")}` : val}</text>
                   </g>
                 );
               })}
@@ -195,7 +247,10 @@ function ExerciseHistoryContent() {
               {/* Dots */}
               {chartData.map((d, i) => {
                 const x = padding + (i / (chartData.length - 1)) * (chartW - padding * 2);
-                const y = chartH - padding - ((d.weight - minW) / range) * (chartH - padding * 2);
+                const normalized = (d.weight - minW) / range;
+                const y = isTimed
+                  ? padding + normalized * (chartH - padding * 2)
+                  : chartH - padding - normalized * (chartH - padding * 2);
                 return <circle key={i} cx={x} cy={y} r="3" fill="var(--accent-blue)" />;
               })}
             </svg>
@@ -227,9 +282,11 @@ function ExerciseHistoryContent() {
                         Set {set.setNumber}
                       </span>
                       <span className="font-medium">
-                        {set.weight !== null
-                          ? `${set.weight}${set.weightUnit} × ${set.reps}`
-                          : `${set.reps} reps`}
+                        {isTimed
+                          ? (set.duration || "—")
+                          : set.weight !== null
+                            ? `${set.weight}${set.weightUnit} × ${set.reps}`
+                            : `${set.reps} reps`}
                       </span>
                       <VariantBadges flags={set.variantFlags} />
                       {set.rpe !== null && (() => {
