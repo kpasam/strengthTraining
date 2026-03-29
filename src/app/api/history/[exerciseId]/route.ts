@@ -31,10 +31,20 @@ export async function GET(
     return NextResponse.json({ error: "Exercise not found" }, { status: 404 });
   }
 
+  const label = db
+    .select({ exerciseType: schema.exerciseLabels.exerciseType })
+    .from(schema.exerciseLabels)
+    .where(eq(schema.exerciseLabels.exerciseId, exerciseId))
+    .get();
+
   const history = getExerciseHistory(userId, exerciseId);
 
   return NextResponse.json({
-    exercise: { id: exercise.id, canonicalName: exercise.canonicalName },
+    exercise: {
+      id: exercise.id,
+      canonicalName: exercise.canonicalName,
+      exerciseType: label?.exerciseType || "strength",
+    },
     sessions: history,
   });
 }

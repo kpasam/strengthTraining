@@ -10,6 +10,7 @@ export interface ExerciseInGroup {
   prescribedNotes: string;
   isAccessory: boolean;
   sortOrder: number;
+  exerciseType: string;
 }
 
 export interface WorkoutGroup {
@@ -53,11 +54,16 @@ export function getPlanForDate(date: string): TodayPlan | null {
         prescribedNotes: schema.workoutGroupExercises.prescribedNotes,
         isAccessory: schema.workoutGroupExercises.isAccessory,
         sortOrder: schema.workoutGroupExercises.sortOrder,
+        exerciseType: schema.exerciseLabels.exerciseType,
       })
       .from(schema.workoutGroupExercises)
       .innerJoin(
         schema.exercises,
         eq(schema.workoutGroupExercises.exerciseId, schema.exercises.id)
+      )
+      .leftJoin(
+        schema.exerciseLabels,
+        eq(schema.workoutGroupExercises.exerciseId, schema.exerciseLabels.exerciseId)
       )
       .where(eq(schema.workoutGroupExercises.groupId, g.id))
       .orderBy(schema.workoutGroupExercises.sortOrder)
@@ -73,6 +79,7 @@ export function getPlanForDate(date: string): TodayPlan | null {
         variantFlags: JSON.parse(e.variantFlags || "[]"),
         isAccessory: !!e.isAccessory,
         prescribedNotes: e.prescribedNotes || "",
+        exerciseType: e.exerciseType || "strength",
       })),
     };
   });

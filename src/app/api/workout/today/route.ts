@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
           weight: l.weight,
           weightUnit: l.weightUnit,
           reps: l.reps,
+          duration: l.duration,
           notes: l.notes,
         })),
         completedSets: logs.length,

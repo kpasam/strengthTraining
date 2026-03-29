@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
       intensity: schema.exerciseLabels.intensity,
       movementType: schema.exerciseLabels.movementType,
       equipment: schema.exerciseLabels.equipment,
+      exerciseType: schema.exerciseLabels.exerciseType,
     })
     .from(schema.exercises)
     .innerJoin(

@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { WeightInput } from "@/components/WeightInput";
 import { RepInput } from "@/components/RepInput";
+import { DurationInput } from "@/components/DurationInput";
 import { VariantBadges } from "@/components/VariantBadge";
 import { UndoToast } from "@/components/UndoToast";
 
@@ -14,6 +15,7 @@ interface LogEntry {
   weight: number | null;
   weightUnit: string;
   reps: number | null;
+  duration: string | null;
   notes: string;
 }
 
@@ -21,6 +23,7 @@ interface PreviousBest {
   weight: number | null;
   weightUnit: string;
   reps: number | null;
+  duration: string | null;
   date: string;
   variantFlags: string[];
   notes: string;
@@ -43,6 +46,7 @@ interface Exercise {
   prescribedReps: string;
   prescribedNotes: string;
   isAccessory: boolean;
+  exerciseType: string;
   previousBest: PreviousBest | null;
   repBests: Record<number, RepBest>;
   lastUsedUnit: "lbs" | "kg";
@@ -81,6 +85,7 @@ function WorkoutGroupContent() {
   const [rpe, setRpe] = useState<number | null>(null);
   const [isBodyweight, setIsBodyweight] = useState(false);
   const [notes, setNotes] = useState("");
+  const [duration, setDuration] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [hasInitRoundRobin, setHasInitRoundRobin] = useState(false);
@@ -149,22 +154,32 @@ function WorkoutGroupContent() {
     const ex = allExercises[activeExerciseIdx];
     if (!ex) return;
 
-    // Auto-fill target reps
-    const targetRep = getTargetReps(ex.prescribedReps, ex.completedSets || 0);
-    setReps(targetRep);
+    const isTimed = ex.exerciseType === "timed";
 
-    // Try rep-specific best first, fall back to previousBest
-    const repBest = targetRep !== null ? ex.repBests?.[targetRep] : null;
-
-    if (repBest) {
-      setWeight(repBest.weight);
-      setWeightUnit((repBest.weightUnit as "lbs" | "kg") || ex.lastUsedUnit);
-    } else if (ex.previousBest) {
-      setWeight(ex.previousBest.weight);
-      setWeightUnit((ex.previousBest.weightUnit as "lbs" | "kg") || ex.lastUsedUnit);
-    } else {
+    if (isTimed) {
+      // Pre-fill duration from previous best
+      setDuration(ex.previousBest?.duration || "");
       setWeight(null);
-      setWeightUnit(ex.lastUsedUnit);
+      setReps(null);
+    } else {
+      // Auto-fill target reps
+      const targetRep = getTargetReps(ex.prescribedReps, ex.completedSets || 0);
+      setReps(targetRep);
+
+      // Try rep-specific best first, fall back to previousBest
+      const repBest = targetRep !== null ? ex.repBests?.[targetRep] : null;
+
+      if (repBest) {
+        setWeight(repBest.weight);
+        setWeightUnit((repBest.weightUnit as "lbs" | "kg") || ex.lastUsedUnit);
+      } else if (ex.previousBest) {
+        setWeight(ex.previousBest.weight);
+        setWeightUnit((ex.previousBest.weightUnit as "lbs" | "kg") || ex.lastUsedUnit);
+      } else {
+        setWeight(null);
+        setWeightUnit(ex.lastUsedUnit);
+      }
+      setDuration("");
     }
 
     setRpe(null);
@@ -179,24 +194,41 @@ function WorkoutGroupContent() {
 
     const allExercises = group.exercises;
     const ex = allExercises[activeExerciseIdx];
-    const setNumber = (ex?.completedSets || 0) + 1;
+    const isTimed = ex?.exerciseType === "timed";
+    const setNumber = isTimed ? 1 : (ex?.completedSets || 0) + 1;
 
     const method = editingLogId ? "PUT" : "POST";
     const logWeight = isBodyweight ? null : weight;
     const bodyPayload = editingLogId
-      ? { id: editingLogId, weight: logWeight, weightUnit, reps, rpe, notes }
-      : {
-          date,
-          exerciseId,
-          variantFlags,
-          groupLabel,
-          setNumber,
-          weight: logWeight,
-          weightUnit,
-          reps,
-          rpe,
-          notes,
-        };
+      ? isTimed
+        ? { id: editingLogId, weight: null, weightUnit: "lbs", reps: null, duration, rpe, notes }
+        : { id: editingLogId, weight: logWeight, weightUnit, reps, rpe, notes }
+      : isTimed
+        ? {
+            date,
+            exerciseId,
+            variantFlags,
+            groupLabel,
+            setNumber,
+            weight: null,
+            weightUnit: "lbs",
+            reps: null,
+            duration,
+            rpe,
+            notes,
+          }
+        : {
+            date,
+            exerciseId,
+            variantFlags,
+            groupLabel,
+            setNumber,
+            weight: logWeight,
+            weightUnit,
+            reps,
+            rpe,
+            notes,
+          };
 
     try {
       const res = await fetch("/api/log", {
@@ -245,6 +277,7 @@ function WorkoutGroupContent() {
     setWeight(log.weight);
     setWeightUnit(log.weightUnit as "lbs" | "kg");
     setReps(log.reps);
+    setDuration(log.duration || "");
     if (log.notes) {
       setNotes(log.notes);
       setShowNotes(true);
@@ -403,213 +436,258 @@ function WorkoutGroupContent() {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="mb-3">
-            <h3 className="text-lg font-bold capitalize">
-              {activeExercise.canonicalName}
-              <VariantBadges flags={activeExercise.variantFlags} />
-            </h3>
-            <p className="text-sm text-[var(--text-secondary)]">
-              Target: {activeExercise.prescribedReps} reps
-              {activeExercise.prescribedNotes && ` • ${activeExercise.prescribedNotes}`}
-            </p>
-          </div>
-
-          {/* Previous best — rep-specific when available */}
           {(() => {
-            const targetRep = getTargetReps(activeExercise.prescribedReps, activeExercise.completedSets || 0);
-            const repBest = targetRep !== null ? activeExercise.repBests?.[targetRep] : null;
-
-            if (repBest) {
-              return (
-                <Link
-                  href={`/history/${activeExercise.exerciseId}?date=${date}`}
-                  className="block mb-3 px-3 py-2 rounded-lg bg-[var(--accent-yellow)]/10 border border-[var(--accent-yellow)]/30 text-sm"
-                >
-                  <span className="text-[var(--accent-yellow)] font-semibold">Best for {targetRep} reps: </span>
-                  <span className="font-bold text-[var(--text-primary)]">
-                    {repBest.weight}{repBest.weightUnit}
-                  </span>
-                  <span className="text-[var(--text-secondary)]"> ({repBest.date})</span>
-                </Link>
-              );
-            }
-
-            if (activeExercise.previousBest) {
-              return (
-                <Link
-                  href={`/history/${activeExercise.exerciseId}?date=${date}`}
-                  className="block mb-3 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] text-sm"
-                >
-                  <span className="text-[var(--text-secondary)]">Previous: </span>
-                  <span className="font-medium">
-                    {activeExercise.previousBest.weight}
-                    {activeExercise.previousBest.weightUnit} × {activeExercise.previousBest.reps}
-                  </span>
-                  <span className="text-[var(--text-secondary)]"> ({activeExercise.previousBest.date})</span>
-                  {activeExercise.previousBest.variantFlags.length > 0 && (
-                    <VariantBadges flags={activeExercise.previousBest.variantFlags} />
+            const isTimed = activeExercise.exerciseType === "timed";
+            return (
+              <>
+                <div className="mb-3">
+                  <h3 className="text-lg font-bold capitalize">
+                    {activeExercise.canonicalName}
+                    <VariantBadges flags={activeExercise.variantFlags} />
+                  </h3>
+                  {!isTimed && (
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Target: {activeExercise.prescribedReps} reps
+                      {activeExercise.prescribedNotes && ` • ${activeExercise.prescribedNotes}`}
+                    </p>
                   )}
-                </Link>
-              );
-            }
+                  {isTimed && activeExercise.prescribedNotes && (
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      {activeExercise.prescribedNotes}
+                    </p>
+                  )}
+                </div>
 
-            return null;
-          })()}
+                {/* Previous best */}
+                {isTimed ? (
+                  activeExercise.previousBest?.duration && (
+                    <Link
+                      href={`/history/${activeExercise.exerciseId}?date=${date}`}
+                      className="block mb-3 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] text-sm"
+                    >
+                      <span className="text-[var(--text-secondary)]">Previous: </span>
+                      <span className="font-medium">{activeExercise.previousBest.duration}</span>
+                      <span className="text-[var(--text-secondary)]"> ({activeExercise.previousBest.date})</span>
+                    </Link>
+                  )
+                ) : (
+                  (() => {
+                    const targetRep = getTargetReps(activeExercise.prescribedReps, activeExercise.completedSets || 0);
+                    const repBest = targetRep !== null ? activeExercise.repBests?.[targetRep] : null;
 
-          {/* Bodyweight toggle + Weight input */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-[var(--text-secondary)]">Weight</label>
-              <button
-                onClick={() => setIsBodyweight(!isBodyweight)}
-                className={`text-xs px-2 py-0.5 rounded font-medium transition-colors ${
-                  isBodyweight
-                    ? "bg-[var(--accent-blue)] text-white"
-                    : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
-                }`}
-              >
-                BW
-              </button>
-            </div>
-            {!isBodyweight && (
-              <WeightInput
-                value={weight}
-                unit={weightUnit}
-                onChange={setWeight}
-                onUnitChange={setWeightUnit}
-              />
-            )}
-            {isBodyweight && (
-              <p className="text-sm text-[var(--text-secondary)] italic">Bodyweight</p>
-            )}
-          </div>
+                    if (repBest) {
+                      return (
+                        <Link
+                          href={`/history/${activeExercise.exerciseId}?date=${date}`}
+                          className="block mb-3 px-3 py-2 rounded-lg bg-[var(--accent-yellow)]/10 border border-[var(--accent-yellow)]/30 text-sm"
+                        >
+                          <span className="text-[var(--accent-yellow)] font-semibold">Best for {targetRep} reps: </span>
+                          <span className="font-bold text-[var(--text-primary)]">
+                            {repBest.weight}{repBest.weightUnit}
+                          </span>
+                          <span className="text-[var(--text-secondary)]"> ({repBest.date})</span>
+                        </Link>
+                      );
+                    }
 
-          {/* Reps input */}
-          <div className="mb-3">
-            <label className="text-xs text-[var(--text-secondary)] mb-1 block">
-              Reps
-            </label>
-            <RepInput value={reps} onChange={setReps} />
-          </div>
+                    if (activeExercise.previousBest) {
+                      return (
+                        <Link
+                          href={`/history/${activeExercise.exerciseId}?date=${date}`}
+                          className="block mb-3 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] text-sm"
+                        >
+                          <span className="text-[var(--text-secondary)]">Previous: </span>
+                          <span className="font-medium">
+                            {activeExercise.previousBest.weight}
+                            {activeExercise.previousBest.weightUnit} × {activeExercise.previousBest.reps}
+                          </span>
+                          <span className="text-[var(--text-secondary)]"> ({activeExercise.previousBest.date})</span>
+                          {activeExercise.previousBest.variantFlags.length > 0 && (
+                            <VariantBadges flags={activeExercise.previousBest.variantFlags} />
+                          )}
+                        </Link>
+                      );
+                    }
 
-          {/* RPE selector */}
-          <div className="mb-3">
-            <label className="text-xs text-[var(--text-secondary)] mb-1 block">
-              Effort <span className="text-[var(--text-secondary)] opacity-60">(optional)</span>
-            </label>
-            <div className="flex gap-2">
-              {([
-                { label: "Easy", value: 7, activeClass: "bg-[var(--accent-green)] text-black" },
-                { label: "Normal", value: 8, activeClass: "bg-[var(--accent-yellow)] text-black" },
-                { label: "Hard", value: 9.5, activeClass: "bg-[var(--accent-red)] text-white" },
-              ] as const).map(({ label, value, activeClass }) => (
+                    return null;
+                  })()
+                )}
+
+                {/* Input section */}
+                {isTimed ? (
+                  <div className="mb-3">
+                    <label className="text-xs text-[var(--text-secondary)] mb-1 block">Time</label>
+                    <DurationInput value={duration} onChange={setDuration} />
+                  </div>
+                ) : (
+                  <>
+                    {/* Bodyweight toggle + Weight input */}
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs text-[var(--text-secondary)]">Weight</label>
+                        <button
+                          onClick={() => setIsBodyweight(!isBodyweight)}
+                          className={`text-xs px-2 py-0.5 rounded font-medium transition-colors ${
+                            isBodyweight
+                              ? "bg-[var(--accent-blue)] text-white"
+                              : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
+                          }`}
+                        >
+                          BW
+                        </button>
+                      </div>
+                      {!isBodyweight && (
+                        <WeightInput
+                          value={weight}
+                          unit={weightUnit}
+                          onChange={setWeight}
+                          onUnitChange={setWeightUnit}
+                        />
+                      )}
+                      {isBodyweight && (
+                        <p className="text-sm text-[var(--text-secondary)] italic">Bodyweight</p>
+                      )}
+                    </div>
+
+                    {/* Reps input */}
+                    <div className="mb-3">
+                      <label className="text-xs text-[var(--text-secondary)] mb-1 block">
+                        Reps
+                      </label>
+                      <RepInput value={reps} onChange={setReps} />
+                    </div>
+                  </>
+                )}
+
+                {/* RPE selector */}
+                <div className="mb-3">
+                  <label className="text-xs text-[var(--text-secondary)] mb-1 block">
+                    Effort <span className="text-[var(--text-secondary)] opacity-60">(optional)</span>
+                  </label>
+                  <div className="flex gap-2">
+                    {([
+                      { label: "Easy", value: 7, activeClass: "bg-[var(--accent-green)] text-black" },
+                      { label: "Normal", value: 8, activeClass: "bg-[var(--accent-yellow)] text-black" },
+                      { label: "Hard", value: 9.5, activeClass: "bg-[var(--accent-red)] text-white" },
+                    ] as const).map(({ label, value, activeClass }) => (
+                      <button
+                        key={value}
+                        onClick={() => setRpe(rpe === value ? null : value)}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${
+                          rpe === value
+                            ? activeClass
+                            : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Notes toggle */}
+                <div className="mb-3">
+                  {showNotes ? (
+                    <input
+                      type="text"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Notes (optional)"
+                      className="w-full px-3 py-2 text-sm bg-[var(--bg-secondary)] rounded-lg border-none outline-none
+                                 focus:ring-2 focus:ring-[var(--accent-blue)]"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setShowNotes(true)}
+                      className="text-xs text-[var(--text-secondary)] underline"
+                    >
+                      + Add note
+                    </button>
+                  )}
+                </div>
+
+                {/* LOG SET / COMPLETE button */}
                 <button
-                  key={value}
-                  onClick={() => setRpe(rpe === value ? null : value)}
-                  className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${
-                    rpe === value
-                      ? activeClass
-                      : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
+                  onClick={() =>
+                    handleLog(activeExercise.exerciseId, activeExercise.variantFlags)
+                  }
+                  className={`w-full py-4 rounded-xl text-black font-bold text-lg transition-colors ${
+                    editingLogId
+                      ? "bg-[var(--accent-blue)] active:bg-[var(--accent-blue)]/80"
+                      : "bg-[var(--accent-green)] active:bg-[var(--accent-green)]/80"
                   }`}
                 >
-                  {label}
+                  {editingLogId
+                    ? (isTimed ? "UPDATE" : "UPDATE SET")
+                    : isTimed
+                      ? (activeExercise.completedSets > 0 ? "UPDATE TIME" : "COMPLETE")
+                      : `LOG SET ${(activeExercise.completedSets || 0) + 1}`}
                 </button>
-              ))}
-            </div>
-          </div>
 
-          {/* Notes toggle */}
-          <div className="mb-3">
-            {showNotes ? (
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notes (optional)"
-                className="w-full px-3 py-2 text-sm bg-[var(--bg-secondary)] rounded-lg border-none outline-none
-                           focus:ring-2 focus:ring-[var(--accent-blue)]"
-              />
-            ) : (
-              <button
-                onClick={() => setShowNotes(true)}
-                className="text-xs text-[var(--text-secondary)] underline"
-              >
-                + Add note
-              </button>
-            )}
-          </div>
+                {editingLogId && (
+                  <button
+                    onClick={() => {
+                      setEditingLogId(null);
+                      setNotes("");
+                      setShowNotes(false);
+                    }}
+                    className="w-full mt-2 py-3 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-medium active:bg-[var(--bg-secondary)]/80 transition-colors"
+                  >
+                    Cancel Edit
+                  </button>
+                )}
 
-          {/* LOG SET button */}
-          <button
-            onClick={() =>
-              handleLog(activeExercise.exerciseId, activeExercise.variantFlags)
-            }
-            className={`w-full py-4 rounded-xl text-black font-bold text-lg transition-colors ${
-              editingLogId
-                ? "bg-[var(--accent-blue)] active:bg-[var(--accent-blue)]/80"
-                : "bg-[var(--accent-green)] active:bg-[var(--accent-green)]/80"
-            }`}
-          >
-            {editingLogId ? "UPDATE SET" : `LOG SET ${(activeExercise.completedSets || 0) + 1}`}
-          </button>
-
-          {editingLogId && (
-            <button
-              onClick={() => {
-                setEditingLogId(null);
-                setNotes("");
-                setShowNotes(false);
-              }}
-              className="w-full mt-2 py-3 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-medium active:bg-[var(--bg-secondary)]/80 transition-colors"
-            >
-              Cancel Edit
-            </button>
-          )}
-
-          {/* Today's set history */}
-          {activeExercise.todayLogs.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-[var(--text-secondary)]/10">
-              <p className="text-xs text-[var(--text-secondary)] mb-1">
-                Today
-              </p>
-              <div className="space-y-1">
-                {activeExercise.todayLogs.map((log) => (
-                  <div key={log.id} className="text-sm flex items-center justify-between py-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[var(--text-secondary)]">
-                        Set {log.setNumber}:
-                      </span>
-                      <span className={`font-medium ${editingLogId === log.id ? "text-[var(--accent-blue)]" : ""}`}>
-                        {log.weight !== null ? `${log.weight}${log.weightUnit} × ${log.reps}` : `${log.reps} reps`}
-                      </span>
-                      {log.notes && (
-                        <span className="text-xs text-[var(--text-secondary)]">
-                          ({log.notes})
-                        </span>
-                      )}
-                      {!editingLogId && <span className="text-[var(--accent-green)]">✓</span>}
-                    </div>
-                    <div className="flex items-center gap-3 ml-2">
-                      <button 
-                        onClick={() => handleEditSet(log)} 
-                        className="text-[var(--text-secondary)] active:text-[var(--accent-blue)] p-1"
-                        aria-label="Edit set"
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteLog(log.id)} 
-                        className="text-[var(--text-secondary)] active:text-[var(--accent-red)] p-1"
-                        aria-label="Delete set"
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                      </button>
+                {/* Today's log history */}
+                {activeExercise.todayLogs.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[var(--text-secondary)]/10">
+                    <p className="text-xs text-[var(--text-secondary)] mb-1">
+                      Today
+                    </p>
+                    <div className="space-y-1">
+                      {activeExercise.todayLogs.map((log) => (
+                        <div key={log.id} className="text-sm flex items-center justify-between py-1">
+                          <div className="flex items-center gap-2">
+                            {!isTimed && (
+                              <span className="text-[var(--text-secondary)]">
+                                Set {log.setNumber}:
+                              </span>
+                            )}
+                            <span className={`font-medium ${editingLogId === log.id ? "text-[var(--accent-blue)]" : ""}`}>
+                              {isTimed
+                                ? log.duration || "—"
+                                : log.weight !== null ? `${log.weight}${log.weightUnit} × ${log.reps}` : `${log.reps} reps`}
+                            </span>
+                            {log.notes && (
+                              <span className="text-xs text-[var(--text-secondary)]">
+                                ({log.notes})
+                              </span>
+                            )}
+                            {!editingLogId && <span className="text-[var(--accent-green)]">✓</span>}
+                          </div>
+                          <div className="flex items-center gap-3 ml-2">
+                            <button
+                              onClick={() => handleEditSet(log)}
+                              className="text-[var(--text-secondary)] active:text-[var(--accent-blue)] p-1"
+                              aria-label="Edit set"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLog(log.id)}
+                              className="text-[var(--text-secondary)] active:text-[var(--accent-red)] p-1"
+                              aria-label="Delete set"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 

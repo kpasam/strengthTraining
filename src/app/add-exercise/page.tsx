@@ -11,6 +11,7 @@ interface CatalogExercise {
   intensity: string | null;
   movementType: string | null;
   equipment: string | null;
+  exerciseType: string | null;
 }
 
 const BODY_PARTS = ["All", "Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Full Body"];
@@ -184,8 +185,13 @@ function AddExerciseContent() {
                 ref={isHighlighted ? highlightRef : null}
                 onClick={() => {
                   setSelected(ex);
-                  setSets(3);
-                  setReps("8,8,8");
+                  if (ex.exerciseType === "timed") {
+                    setSets(1);
+                    setReps("timed");
+                  } else {
+                    setSets(3);
+                    setReps("8,8,8");
+                  }
                   setAddError("");
                 }}
                 className={`w-full flex items-center gap-3 p-4 bg-[var(--bg-card)] border rounded-xl text-left active:opacity-70 transition-all ${
@@ -220,6 +226,11 @@ function AddExerciseContent() {
                     {ex.equipment && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-[var(--text-secondary)] capitalize">
                         {ex.equipment}
+                      </span>
+                    )}
+                    {ex.exerciseType === "timed" && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-green)]/10 text-[var(--accent-green)]">
+                        timed
                       </span>
                     )}
                   </div>
@@ -304,43 +315,52 @@ function AddExerciseContent() {
               </div>
             )}
 
-            {/* Sets input — hidden when adding to existing group (group already has its own sets) */}
-            {selectedGroupLabel ? (
-              <p className="text-xs text-[var(--text-secondary)] mb-4">
-                Sets follow Group {selectedGroupLabel}
+            {/* Sets & Reps — hidden for timed exercises */}
+            {selected.exerciseType === "timed" ? (
+              <p className="text-sm text-[var(--text-secondary)] mb-6">
+                Timed activity — log your time during the workout
               </p>
             ) : (
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-[var(--text-primary)]">Sets</span>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setSets((s) => Math.max(1, s - 1))}
-                    className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] font-bold flex items-center justify-center active:opacity-70"
-                  >
-                    −
-                  </button>
-                  <span className="w-6 text-center font-bold text-[var(--text-primary)]">{sets}</span>
-                  <button
-                    onClick={() => setSets((s) => s + 1)}
-                    className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] font-bold flex items-center justify-center active:opacity-70"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            )}
+              <>
+                {/* Sets input — hidden when adding to existing group (group already has its own sets) */}
+                {selectedGroupLabel ? (
+                  <p className="text-xs text-[var(--text-secondary)] mb-4">
+                    Sets follow Group {selectedGroupLabel}
+                  </p>
+                ) : (
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-medium text-[var(--text-primary)]">Sets</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSets((s) => Math.max(1, s - 1))}
+                        className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] font-bold flex items-center justify-center active:opacity-70"
+                      >
+                        −
+                      </button>
+                      <span className="w-6 text-center font-bold text-[var(--text-primary)]">{sets}</span>
+                      <button
+                        onClick={() => setSets((s) => s + 1)}
+                        className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] font-bold flex items-center justify-center active:opacity-70"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-            {/* Reps input */}
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-sm font-medium text-[var(--text-primary)]">Reps</span>
-              <input
-                type="text"
-                value={reps}
-                onChange={(e) => setReps(e.target.value)}
-                className="w-28 bg-[var(--bg-secondary)] border border-white/5 text-sm text-center px-2 py-1.5 rounded-lg outline-none text-[var(--text-primary)]"
-                placeholder="8,8,8"
-              />
-            </div>
+                {/* Reps input */}
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-sm font-medium text-[var(--text-primary)]">Reps</span>
+                  <input
+                    type="text"
+                    value={reps}
+                    onChange={(e) => setReps(e.target.value)}
+                    className="w-28 bg-[var(--bg-secondary)] border border-white/5 text-sm text-center px-2 py-1.5 rounded-lg outline-none text-[var(--text-primary)]"
+                    placeholder="8,8,8"
+                  />
+                </div>
+              </>
+            )}
 
             {addError && (
               <p className="text-xs text-[var(--accent-red)] mb-3 text-center">{addError}</p>

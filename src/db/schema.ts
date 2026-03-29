@@ -77,6 +77,7 @@ export const exerciseLabels = sqliteTable("exercise_labels", {
   intensity: text("intensity"),
   movementType: text("movement_type"),
   equipment: text("equipment"),
+  exerciseType: text("exercise_type").default("strength"),
 });
 
 export const workoutLogs = sqliteTable(
