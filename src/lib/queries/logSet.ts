@@ -12,6 +12,7 @@ export interface LogSetInput {
   weightUnit: "lbs" | "kg";
   reps: number | null;
   duration: string | null;
+  distance: string | null;
   rpe: number | null;
   notes: string;
 }
@@ -30,6 +31,7 @@ export function logSet(input: LogSetInput) {
       weightUnit: input.weightUnit,
       reps: input.reps,
       duration: input.duration,
+      distance: input.distance,
       rpe: input.rpe,
       notes: input.notes,
       completedAt: new Date().toISOString(),
@@ -52,6 +54,7 @@ export function updateLog(id: number, updates: Partial<LogSetInput>) {
       weightUnit: updates.weightUnit,
       reps: updates.reps !== undefined ? updates.reps : undefined,
       duration: updates.duration,
+      distance: updates.distance,
       rpe: updates.rpe,
       notes: updates.notes,
       completedAt: new Date().toISOString(),

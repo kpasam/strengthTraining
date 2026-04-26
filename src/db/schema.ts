@@ -99,6 +99,7 @@ export const workoutLogs = sqliteTable(
     weightUnit: text("weight_unit").default("lbs"),
     reps: integer("reps"),
     duration: text("duration"),
+    distance: text("distance"),
     rpe: integer("rpe"),
     notes: text("notes").default(""),
     completedAt: text("completed_at").default("CURRENT_TIMESTAMP"),

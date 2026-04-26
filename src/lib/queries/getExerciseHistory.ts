@@ -9,6 +9,7 @@ export interface HistoryEntry {
   weightUnit: string;
   reps: number | null;
   duration: string | null;
+  distance: string | null;
   rpe: number | null;
   notes: string;
   variantFlags: string[];
@@ -43,6 +44,7 @@ export function getExerciseHistory(userId: number, exerciseId: number): SessionG
       weightUnit: log.weightUnit || "lbs",
       reps: log.reps,
       duration: log.duration,
+      distance: log.distance,
       rpe: log.rpe,
       notes: log.notes || "",
       variantFlags: JSON.parse(log.variantFlags || "[]"),

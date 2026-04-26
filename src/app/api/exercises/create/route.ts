@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
     intensity?: string;
     movementType?: string;
     equipment?: string;
+    isCardio?: boolean;
   };
   try {
     body = await request.json();
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
         intensity: body.intensity || null,
         movementType: body.movementType || null,
         equipment: body.equipment || null,
+        exerciseType: body.isCardio ? "timed" : "strength",
       })
       .run();
 
