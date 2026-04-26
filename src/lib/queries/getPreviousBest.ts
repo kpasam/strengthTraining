@@ -6,6 +6,7 @@ export interface PreviousBest {
   weightUnit: string;
   reps: number | null;
   duration: string | null;
+  distance: string | null;
   date: string;
   variantFlags: string[];
   notes: string;
@@ -39,6 +40,7 @@ export function getPreviousBest(
     weightUnit: result.weightUnit || "lbs",
     reps: result.reps,
     duration: result.duration,
+    distance: result.distance,
     date: result.date,
     variantFlags: JSON.parse(result.variantFlags || "[]"),
     notes: result.notes || "",

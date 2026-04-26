@@ -75,6 +75,7 @@ function NewExerciseContent() {
   const [intensity, setIntensity] = useState("");
   const [movementType, setMovementType] = useState("");
   const [equipment, setEquipment] = useState("");
+  const [isCardio, setIsCardio] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -97,6 +98,7 @@ function NewExerciseContent() {
           intensity: intensity || undefined,
           movementType: movementType || undefined,
           equipment: equipment || undefined,
+          isCardio,
         }),
       });
       const data = await res.json();
@@ -176,6 +178,25 @@ function NewExerciseContent() {
             Equipment <span className="text-[var(--text-secondary)]/50 font-normal normal-case">(optional)</span>
           </label>
           <SelectChips options={EQUIPMENT_OPTIONS} value={equipment} onChange={setEquipment} />
+        </div>
+
+        {/* Is Cardio */}
+        <div className="flex items-center justify-between bg-[var(--bg-card)] border border-white/5 px-4 py-3 rounded-xl">
+          <div>
+            <label className="block text-sm font-semibold text-[var(--text-primary)]">
+              Cardio Activity
+            </label>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">e.g., walking, 5k, cycling</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              className="sr-only peer"
+              checked={isCardio}
+              onChange={(e) => setIsCardio(e.target.checked)}
+            />
+            <div className="w-11 h-6 bg-[var(--bg-secondary)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-blue)]"></div>
+          </label>
         </div>
 
         {error && (

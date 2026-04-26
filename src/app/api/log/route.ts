@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       weightUnit: body.weightUnit || "lbs",
       reps: body.reps ?? null,
       duration: body.duration ?? null,
+      distance: body.distance ?? null,
       rpe: body.rpe ?? null,
       notes: body.notes || "",
     });
@@ -61,6 +62,7 @@ export async function PUT(request: NextRequest) {
       weightUnit: body.weightUnit || "lbs",
       reps: body.reps ?? null,
       duration: body.duration ?? null,
+      distance: body.distance ?? null,
       rpe: body.rpe ?? null,
       notes: body.notes || "",
     });

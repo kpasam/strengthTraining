@@ -16,6 +16,7 @@ interface LogEntry {
   weightUnit: string;
   reps: number | null;
   duration: string | null;
+  distance: string | null;
   notes: string;
 }
 
@@ -24,6 +25,7 @@ interface PreviousBest {
   weightUnit: string;
   reps: number | null;
   duration: string | null;
+  distance: string | null;
   date: string;
   variantFlags: string[];
   notes: string;
@@ -86,6 +88,7 @@ function WorkoutGroupContent() {
   const [isBodyweight, setIsBodyweight] = useState(false);
   const [notes, setNotes] = useState("");
   const [duration, setDuration] = useState("");
+  const [distance, setDistance] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [hasInitRoundRobin, setHasInitRoundRobin] = useState(false);
@@ -157,8 +160,9 @@ function WorkoutGroupContent() {
     const isTimed = ex.exerciseType === "timed";
 
     if (isTimed) {
-      // Pre-fill duration from previous best
+      // Pre-fill duration and distance from previous best
       setDuration(ex.previousBest?.duration || "");
+      setDistance(ex.previousBest?.distance || "");
       setWeight(null);
       setReps(null);
     } else {
@@ -180,6 +184,7 @@ function WorkoutGroupContent() {
         setWeightUnit(ex.lastUsedUnit);
       }
       setDuration("");
+      setDistance("");
     }
 
     setRpe(null);
@@ -201,7 +206,7 @@ function WorkoutGroupContent() {
     const logWeight = isBodyweight ? null : weight;
     const bodyPayload = editingLogId
       ? isTimed
-        ? { id: editingLogId, weight: null, weightUnit: "lbs", reps: null, duration, rpe, notes }
+        ? { id: editingLogId, weight: null, weightUnit: "lbs", reps: null, duration, distance, rpe, notes }
         : { id: editingLogId, weight: logWeight, weightUnit, reps, rpe, notes }
       : isTimed
         ? {
@@ -214,6 +219,7 @@ function WorkoutGroupContent() {
             weightUnit: "lbs",
             reps: null,
             duration,
+            distance,
             rpe,
             notes,
           }
@@ -278,6 +284,7 @@ function WorkoutGroupContent() {
     setWeightUnit(log.weightUnit as "lbs" | "kg");
     setReps(log.reps);
     setDuration(log.duration || "");
+    setDistance(log.distance || "");
     if (log.notes) {
       setNotes(log.notes);
       setShowNotes(true);
@@ -467,6 +474,12 @@ function WorkoutGroupContent() {
                     >
                       <span className="text-[var(--text-secondary)]">Previous: </span>
                       <span className="font-medium">{activeExercise.previousBest.duration}</span>
+                      {activeExercise.previousBest.distance && (
+                        <>
+                          <span className="text-[var(--text-secondary)] mx-1">•</span>
+                          <span className="font-medium">{activeExercise.previousBest.distance}</span>
+                        </>
+                      )}
                       <span className="text-[var(--text-secondary)]"> ({activeExercise.previousBest.date})</span>
                     </Link>
                   )
@@ -515,9 +528,21 @@ function WorkoutGroupContent() {
 
                 {/* Input section */}
                 {isTimed ? (
-                  <div className="mb-3">
-                    <label className="text-xs text-[var(--text-secondary)] mb-1 block">Time</label>
-                    <DurationInput value={duration} onChange={setDuration} />
+                  <div className="mb-3 flex gap-3">
+                    <div className="flex-1">
+                      <label className="text-xs text-[var(--text-secondary)] mb-1 block">Time</label>
+                      <DurationInput value={duration} onChange={setDuration} />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-xs text-[var(--text-secondary)] mb-1 block">Distance / Steps</label>
+                      <input
+                        type="text"
+                        value={distance}
+                        onChange={(e) => setDistance(e.target.value)}
+                        placeholder="e.g., 3.1m, 10k"
+                        className="w-full bg-[var(--bg-secondary)] border border-white/5 text-sm px-3 py-3 rounded-xl outline-none placeholder:text-[var(--text-secondary)] text-[var(--text-primary)]"
+                      />
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -654,7 +679,7 @@ function WorkoutGroupContent() {
                             )}
                             <span className={`font-medium ${editingLogId === log.id ? "text-[var(--accent-blue)]" : ""}`}>
                               {isTimed
-                                ? log.duration || "—"
+                                ? [log.duration, log.distance].filter(Boolean).join(" • ") || "—"
                                 : log.weight !== null ? `${log.weight}${log.weightUnit} × ${log.reps}` : `${log.reps} reps`}
                             </span>
                             {log.notes && (
